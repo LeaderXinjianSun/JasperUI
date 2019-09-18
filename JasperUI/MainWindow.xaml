@@ -1,12 +1,154 @@
 ﻿<Window x:Class="JasperUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"        
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="JasperUI20190917" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+                     BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Dictionary1.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Menu>
+            <MenuItem Header="主页" Click="HomePageSelect"></MenuItem>
+            <MenuItem Header="参数" Click="ParameterPageSelect"></MenuItem>
+            <MenuItem Header="扫码" Click="CameraPageSelect"></MenuItem>
+        </Menu>
+        <Grid Grid.Row="1" Name="HomePage">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"></RowDefinition>
+                <RowDefinition></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.Background>
+                    <ImageBrush ImageSource="15621426903718.png" Stretch="UniformToFill"></ImageBrush>
+                </Grid.Background>
+            </Grid>
+            <TextBox Grid.Row="1" VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" Margin="1" x:Name="MsgTextBox" IsReadOnly="True" TextChanged="MsgTextBox_TextChanged"  FontSize="14" Background="Black" FontFamily="宋体" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"></TextBox>
+            <Grid Grid.Column="1" Grid.RowSpan="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Button Margin="10" FontSize="20" Content="启动" Click="EpsonStartButtonClick"></Button>
+                    <Button Margin="10" FontSize="20" Grid.Column="1" Content="暂停" Click="EpsonPauseButtonClick"></Button>
+                    <Button Margin="10" FontSize="20" Grid.Column="2" Content="继续" Click="EpsonContinueButtonClick"></Button>
+                    <Button Margin="10" FontSize="20" Grid.Row="1" Content="重启" Click="EpsonReStartButtonClick"></Button>
+                    <Button Margin="10" FontSize="20" Grid.Row="1" Grid.Column="1"  Content="Func" Click="FuncButtonClick"></Button>
+                    <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.ColumnSpan="3">
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="自动" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusAuto" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="警告" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusWarning" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="错误" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusSError" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="门" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusSafeGuard" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="停止" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusEStop" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="异常" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusError" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="暂停" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusPaused" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="运行" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusRunning" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource EpsonStatusStackPanel}">
+                            <TextBlock Style="{StaticResource EpsonStatusTextBlock}" Text="准备" ></TextBlock>
+                            <Ellipse Name="EllipseEpsonStatusReady" Style="{StaticResource EpsonEllipseBase}"></Ellipse>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+            
+        </Grid>
+        <Grid Grid.Row="1" Name="ParameterPage" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition></RowDefinition>
+                <RowDefinition></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="机台参数">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text=" 机台编号 " VerticalAlignment="Center"></TextBlock>
+                        <TextBox Name="MachineID" Width="200" VerticalAlignment="Center"></TextBox>
+                        <Button Width="60" Margin="20,0,10,0" Content="保存" Click="SaveParameterButtonClick"></Button>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+        <Grid Grid.Row="1" Name="CameraPage" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"></RowDefinition>
+                <RowDefinition></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <!--<WindowsFormsHost>
+                <icimage:ICImagingControl Width="640" Height="480" x:Name="imgctr" DeviceLost="imgctr_DeviceLost"></icimage:ICImagingControl>
+            </WindowsFormsHost>-->
+        </Grid>
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock>PLC</TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <Ellipse Name="EllipsePLCState" Style="{StaticResource EllipseStatusBase}"></Ellipse>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock>Robot</TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <Ellipse Name="EllipseRobotState" Style="{StaticResource EllipseStatusBase}"></Ellipse>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>
