@@ -8,6 +8,8 @@ using BingLibrary.hjb.file;
 using BingLibrary.hjb.tools;
 using BingLibrary.Net.net;
 using System.Data;
+using ViewROI;
+using BingLibrary.HVision;
 
 namespace JasperUI.Model
 {

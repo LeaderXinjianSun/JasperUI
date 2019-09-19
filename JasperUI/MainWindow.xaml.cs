@@ -17,6 +17,9 @@ using BingLibrary.hjb.file;
 using BingLibrary.hjb.tools;
 using OfficeOpenXml;
 using System.IO;
+using ViewROI;
+using BingLibrary.HVision;
+using HalconDotNet;
 
 namespace JasperUI
 {
@@ -26,6 +29,7 @@ namespace JasperUI
     public partial class MainWindow : Window
     {
         #region 变量
+        bool CameraState = false;
         bool PLCState = false;
         bool RobotState = false;
         bool EpsonStatusAuto = false;
@@ -46,9 +50,18 @@ namespace JasperUI
         public MainWindow()
         {
             InitializeComponent();
+
             epsonRC90 = new EpsonRC90();
+
+            GlobalVars.viewController1 = new HWndCtrl(ImageWindow1);
+            GlobalVars.roiController1 = new ROIController();
+            GlobalVars.viewController1.useROIController(GlobalVars.roiController1);
+            GlobalVars.viewController1.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+
+
             epsonRC90.ModelPrint += ModelPrintEventProcess;
             epsonRC90.EpsonStatusUpdate += EpsonStatusUpdateProcess;
+
         }
         #region 功能函数
         void AddMessage(string str)
@@ -141,20 +154,27 @@ namespace JasperUI
                                     }
                                 }
                             }
+                            if (GlobalVars.Camera.OpenCamera("CAM1","GigEVision"))
+                            {
+                                MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM1", "COM0");
+                                epsonRC90.BottomScan = new Scan();
+                                epsonRC90.BottomScan.ini(COM);
+                                COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM2", "COM0");
+                                epsonRC90.UpScan = new Scan();
+                                epsonRC90.UpScan.ini(COM);
+                                Async.RunFuncAsync(ls.Run, null);
+                                string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
+                                int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
+                                pLC = new Fx5u(ip, port);
+                                Async.RunFuncAsync(IORun, null);
+                                Run();
+                            }
+                            else
+                            {
+                                throw new Exception("相机打开失败");
+                            }
 
-                            MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                            string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM1", "COM0");
-                            epsonRC90.BottomScan = new Scan();
-                            epsonRC90.BottomScan.ini(COM);
-                            COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM2", "COM0");
-                            epsonRC90.UpScan = new Scan();
-                            epsonRC90.UpScan.ini(COM);
-                            Async.RunFuncAsync(ls.Run, null);
-                            string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
-                            int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
-                            pLC = new Fx5u(ip, port);
-                            Async.RunFuncAsync(IORun, null);
-                            Run();
 
 
 
@@ -273,6 +293,14 @@ namespace JasperUI
             {
                 EllipseRobotState.Fill = Brushes.Red;
             }
+            if (CameraState)
+            {
+                EllipseCameraState.Fill = Brushes.Green;
+            }
+            else
+            {
+                EllipseCameraState.Fill = Brushes.Red;
+            }
             #endregion
         }
         async void Run()
@@ -282,6 +310,7 @@ namespace JasperUI
                 await Task.Delay(100);
                 #region UpdateUI
                 PLCState = pLC.Connect;
+                CameraState = GlobalVars.Camera.Connected;
                 UpdateUI();
                 #endregion
 
@@ -426,7 +455,11 @@ namespace JasperUI
             epsonRC90.BottomScanGetBarCodeCallback("G5Y936600AZP2CQ1S");
         }
 
-
+        private void GrapButton_Click(object sender, RoutedEventArgs e)
+        {
+            GlobalVars.GetImage();
+            GlobalVars.GetBarcode();
+        }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
