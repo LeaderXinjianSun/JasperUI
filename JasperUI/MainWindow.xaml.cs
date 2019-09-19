@@ -157,12 +157,9 @@ namespace JasperUI
                             if (GlobalVars.Camera.OpenCamera("CAM1","GigEVision"))
                             {
                                 MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM1", "COM0");
-                                epsonRC90.BottomScan = new Scan();
-                                epsonRC90.BottomScan.ini(COM);
-                                COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM2", "COM0");
-                                epsonRC90.UpScan = new Scan();
-                                epsonRC90.UpScan.ini(COM);
+                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM2", "COM0");
+                                GlobalVars.UpScan = new Scan();
+                                GlobalVars.UpScan.ini(COM);
                                 Async.RunFuncAsync(ls.Run, null);
                                 string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
                                 int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
@@ -311,6 +308,7 @@ namespace JasperUI
                 #region UpdateUI
                 PLCState = pLC.Connect;
                 CameraState = GlobalVars.Camera.Connected;
+                RobotState = epsonRC90.CtrlStatus && epsonRC90.IOReceiveStatus && epsonRC90.TestReceiveStatus && epsonRC90.TestSendStatus;
                 UpdateUI();
                 #endregion
 
@@ -452,19 +450,72 @@ namespace JasperUI
 
         private void FuncButtonClick(object sender, RoutedEventArgs e)
         {
-            epsonRC90.BottomScanGetBarCodeCallback("G5Y936600AZP2CQ1S");
+            //epsonRC90.BottomScanGetBarCodeCallback("G5Y936600AZP2CQ1S");
+            try
+            {
+                GlobalVars.GetImage();
+                GlobalVars.GetBarcode();
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)
         {
-            GlobalVars.GetImage();
-            GlobalVars.GetBarcode();
+            try
+            {
+                GlobalVars.GetBarcode();
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
+
+        }
+
+        private void DrawRec1_Click(object sender, RoutedEventArgs e)
+        {
+            HTuple row1, column1, row2, column2;
+            GlobalVars.viewController1.viewPort.HalconWindow.SetColor("red");
+            HOperatorSet.DrawRectangle1(GlobalVars.viewController1.viewPort.HalconWindow,out row1,out column1,out row2,out column2);
+            HObject rectangle;
+            HOperatorSet.GenRectangle1(out rectangle, row1, column1, row2, column2);
+            GlobalVars.viewController1.addIconicVar(rectangle);
+            GlobalVars.viewController1.repaint();
+            rectangle.WriteObject(System.Environment.CurrentDirectory + "\\rectangle1.hobj");
+        }
+
+        private void DrawRec2_Click(object sender, RoutedEventArgs e)
+        {
+            HTuple row1, column1, row2, column2;
+            GlobalVars.viewController1.viewPort.HalconWindow.SetColor("red");
+            HOperatorSet.DrawRectangle1(GlobalVars.viewController1.viewPort.HalconWindow, out row1, out column1, out row2, out column2);
+            HObject rectangle;
+            HOperatorSet.GenRectangle1(out rectangle, row1, column1, row2, column2);
+            GlobalVars.viewController1.addIconicVar(rectangle);
+            GlobalVars.viewController1.repaint();
+            rectangle.WriteObject(System.Environment.CurrentDirectory + "\\rectangle2.hobj");
+        }
+
+        private void GrapImage_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                GlobalVars.GetImage();
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             Init();
             AddMessage("软件加载完成");
+            CameraPage.Visibility = Visibility.Collapsed;
         }
     }
 }

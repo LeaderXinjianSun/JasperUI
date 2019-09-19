@@ -27,14 +27,14 @@ namespace JasperUI.Model
         public bool[] Rc90Out = new bool[100];
         public bool CtrlStatus = false, IOReceiveStatus = false, TestSendStatus = false, TestReceiveStatus = false;
         private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
-        public Scan BottomScan, UpScan;
+
         public int[,] BordIndexA = new int[12, 8];
         public int[,] BordIndexB = new int[12, 8];
         public int BordSW = 0;
-        //条码 板条码 索引 区间号 区间内索引 产品状态
-        public List<Tuple<string, string, int, string, string>> BarInfo = new List<Tuple<string, string, int, string, string>>();
+        //条码 板条码 索引 产品状态 日期 时间
+        public ProducInfo[] BarInfo = new ProducInfo[96];
         public string BordBarcode = "Null";
-        Mysql mysql = new Mysql();
+        
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -46,6 +46,15 @@ namespace JasperUI.Model
         {
             ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
             udp.Connect(10999, 13800, "192.168.0.130");
+            for (int i = 0; i < 96; i++)
+            {
+                BarInfo[i] = new ProducInfo();
+                BarInfo[i].Barcode = "FAIL";
+                BarInfo[i].BordBarcode = "Null";
+                BarInfo[i].Status = 0;
+                BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
+            }
             Async.RunFuncAsync(Run, null);
         }
         #endregion
@@ -283,15 +292,32 @@ namespace JasperUI.Model
                             switch (strs[0])
                             {
                                 case "ScanBarcode":
-                                    //BottomScan.GetBarCode(BottomScanGetBarCodeCallback);
+                                    GlobalVars.GetImage();
+                                    String[] Barcodes = GlobalVars.GetBarcode();
+                                    if (strs.Length > 1)
+                                    {
+                                        BottomScanGetBarCodeCallback(Barcodes, strs);
+                                    }
+                                    else
+                                    {
+                                        string barcode;
+                                        if (Barcodes[0] == "error")
+                                        {
+                                            barcode = Barcodes[1];
+                                        }
+                                        else
+                                        {
+                                            barcode = Barcodes[0];
+                                        }
+                                        BottomScanGetBarCodeCallback(barcode);
+                                    }
 
-                                    BottomScanGetBarCodeCallback("G5Y936600AZP2CQ1S");
                                     break;
                                 case "TestStart":
                                     SendBarcode(int.Parse(strs[1]));
                                     break;
                                 case "TestResult":
-                                    if (strs.Length == 10 && BarInfo.Count > 0)
+                                    if (strs.Length == 10)
                                     {
                                         SaveResult(strs);
                                     }                                   
@@ -303,7 +329,7 @@ namespace JasperUI.Model
                         }
                         catch (Exception ex)
                         {
-                            ModelPrint("TestRevAnalysis " + ex.Message);
+                            ModelPrint(ex.Message);
                         }
                     }
                 }
@@ -351,8 +377,6 @@ namespace JasperUI.Model
                             dt = ds.Tables[0];
                             if (dt.Rows.Count > 0)
                             {
-
-                                BarInfo.Clear();
                                 for (int i = 0; i < 96; i++)
                                 {
                                     int pcser;
@@ -392,39 +416,46 @@ namespace JasperUI.Model
                                                 //}
                                             }
                                             //条码 板条码 产品状态 日期 时间
-                                            Tuple<string, string, int, string, string> newItem =
-                                                new Tuple<string, string, int, string, string>((string)dr["SCBARCODE"], BordBarcode, isAoi ? 1 : 0,DateTime.Now.ToString("yyyyMMdd"),DateTime.Now.ToString("HHmmss"));                                           
-                                            BarInfo.Add(newItem);
+                                            BarInfo[i].Barcode = (string)dr["SCBARCODE"];
+                                            BarInfo[i].BordBarcode = BordBarcode;
+                                            BarInfo[i].Status = isAoi ? 1 : 0;
+                                            BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                            BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                         }
                                         else
                                         {
-                                            Tuple<string, string, int, string, string> newItem =
-                                                new Tuple<string, string, int, string, string>("FAIL", BordBarcode, 2, DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"));
-                                            BarInfo.Add(newItem);
+                                            BarInfo[i].Barcode = "FAIL";
+                                            BarInfo[i].BordBarcode = BordBarcode;
+                                            BarInfo[i].Status = 2;
+                                            BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                            BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                         }
                                     }
                                     catch (Exception ex)
                                     {
-                                        Tuple<string, string, int, string, string> newItem =
-                                            new Tuple<string, string, int, string, string>("FAIL", BordBarcode, 2, DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"));
-                                        BarInfo.Add(newItem);
+                                        BarInfo[i].Barcode = "FAIL";
+                                        BarInfo[i].BordBarcode = BordBarcode;
+                                        BarInfo[i].Status = 2;
+                                        BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                        BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                     }
                                 }
                                 string retstr = "";
                                 string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                Mysql mysql = new Mysql();
                                 if (mysql.Connect())
                                 {
                                     for (int i = 0; i < 96; i++)
                                     {
-                                        string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCPNLBAR,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[i].Item1 + "','"
-                                        + PNLBarcode + "','" + BordBarcode + "','" + BarInfo[i].Item4 + "','" + BarInfo[i].Item5 + "','" + (i + 1).ToString() + "','" + BarInfo[i].Item3.ToString() + "')";
+                                        string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCPNLBAR,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[i].Barcode + "','"
+                                        + PNLBarcode + "','" + BordBarcode + "','" + BarInfo[i].TDate + "','" + BarInfo[i].TTime + "','" + (i + 1).ToString() + "','" + BarInfo[i].Status.ToString() + "')";
                                         mysql.executeQuery(stm);
-                                    }
-                                    mysql.DisConnect();
+                                    }                                    
                                 }
+                                mysql.DisConnect();
                                 for (int i = 0; i < 96; i++)
                                 {
-                                    retstr += BarInfo[i].Item3.ToString() + ";";
+                                    retstr += BarInfo[i].Status.ToString() + ";";
                                 }
                                 retstr = retstr.Substring(0, retstr.Length - 1);
 
@@ -470,12 +501,66 @@ namespace JasperUI.Model
             });
 
         }
+        public async void BottomScanGetBarCodeCallback(string[] barcode,string[] mes)
+        {
+            ModelPrint(barcode[0] + "," + barcode[1]);
+            await Task.Run(async()=> {
+                int index = int.Parse(mes[1]);
+                int index1 = int.Parse(mes[2]);
+                int[] barindex = new int[2];
+                barindex[0] = index1 + index * 8;
+                barindex[1] = index1 + 4 + index * 8;
+                
+                for (int i = 0; i < 2; i++)
+                {
+                    if (barcode[i] != "error")
+                    {
+                        bool isAoi = false;
+                        Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                        string sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                        DataSet ds = oraDB.executeQuery(sqlstr);
+                        DataTable dt1 = ds.Tables[0];
+                        if ((string)dt1.Rows[0][0] == "0")
+                        {
+                            isAoi = true;
+                        }
+                        //条码 板条码 产品状态 日期 时间
+                        BarInfo[barindex[i]].Barcode = barcode[i];
+                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                        BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
+                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                    }
+                    else
+                    {
+                        BarInfo[barindex[i]].Barcode = "FAIL";
+                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                        BarInfo[barindex[i]].Status = 2;
+                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                    }
+                    
+                    string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                    Mysql mysql = new Mysql();
+                    if (mysql.Connect())
+                    {
+                        string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[barindex[i]].Barcode + "','"
+                        + BordBarcode + "','" + BarInfo[barindex[i]].TDate + "','" + BarInfo[barindex[i]].TTime + "','" + (barindex[i] + 1).ToString() + "','" + BarInfo[barindex[i]].Status.ToString() + "')";
+                        mysql.executeQuery(stm);
+                    }
+                    mysql.DisConnect();
+                }
+                string retstr = mes[2] + ";" + BarInfo[barindex[0]].Status.ToString() + ";" + BarInfo[barindex[1]].Status.ToString();
+                await TestSentNet.SendAsync("BarcodeInfo1;" + retstr);
+                ModelPrint("BarcodeInfo1;" + retstr);
+            });
+        }
         async void SendBarcode(int index)
         {
             string str = "";
             for (int i = 0; i < 8; i++)
             {
-                str += BarInfo[i + index * 8].Item1 + "|";
+                str += BarInfo[i + index * 8].Barcode + "|";
             }
             str += "0";
             ModelPrint(str);
@@ -485,15 +570,16 @@ namespace JasperUI.Model
         {
             await Task.Run(()=> {
                 int index = int.Parse(rststr[1]);
+                Mysql mysql = new Mysql();
                 if (mysql.Connect())
                 {
                     for (int i = 0; i < 8; i++)
                     {
-                        string stm = "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Item1 + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].Item2
-                        + "' AND SDATE = '" + BarInfo[index * 8 + i].Item4 + "' AND STIME = '" + BarInfo[index * 8 + i].Item5 + "'";
+                        string stm = "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
+                        + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "'";
                         mysql.executeQuery(stm);
                     }
-                    mysql.DisConnect();
+                    mysql.DisConnect();                   
                 }
 
             });
@@ -501,5 +587,14 @@ namespace JasperUI.Model
         }
         #endregion
 
+    }
+    public class ProducInfo
+    {
+        //条码 板条码 产品状态 日期 时间
+        public string Barcode { set; get; }
+        public string BordBarcode { set; get; }
+        public int Status { set; get; }
+        public string TDate { set; get; }
+        public string TTime { set; get; }
     }
 }

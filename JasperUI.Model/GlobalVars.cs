@@ -11,6 +11,8 @@ namespace JasperUI.Model
 {
     public static class GlobalVars
     {
+        public static Scan UpScan;
+
         public static HWndCtrl viewController1;
         public static ROIController roiController1;
         public static CameraOperate Camera = new CameraOperate();
@@ -25,25 +27,35 @@ namespace JasperUI.Model
 
             HObject image1, image2;
             HObject Roi1, Roi2;
-            HTuple height, width;
-            HOperatorSet.GetImageSize(Camera.CurrentImage, out width, out height);
-            HOperatorSet.GenRectangle1(out Roi1, 0, 0, height / 2 - 1, width / 2 - 1);
-            HOperatorSet.GenRectangle1(out Roi2, height / 2, width / 2, height, width);
+            HObject symbolXLD1, symbolXLD2;
+            HOperatorSet.ReadObject(out Roi1, System.Environment.CurrentDirectory + "\\rectangle1.hobj");
+            HOperatorSet.ReadObject(out Roi2, System.Environment.CurrentDirectory + "\\rectangle2.hobj");
             HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi1, out image1);
             HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi2, out image2);
-            (new HImage(image1)).FindDataCode2d(DataCodeHandle, new HTuple(), new HTuple(), out ResultHandles, out DecodedDataStrings);
-            res[0] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString() : "error";
-            int[] co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, 0, 0);
+            HOperatorSet.FindDataCode2d(new HImage(image1), out symbolXLD1, DataCodeHandle, new HTuple(), new HTuple(), out ResultHandles, out DecodedDataStrings);
+            res[0] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+            HOperatorSet.FindDataCode2d(new HImage(image2), out symbolXLD2, DataCodeHandle, new HTuple(), new HTuple(), out ResultHandles, out DecodedDataStrings);
+            res[1] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+
+            viewController1.addIconicVar(symbolXLD1);
+            viewController1.addIconicVar(symbolXLD2);
+            viewController1.addIconicVar(Roi1);
+            viewController1.addIconicVar(Roi2);
+
+            viewController1.viewPort.HalconWindow.SetColor("green");
+            viewController1.repaint();
+            HTuple rows, columns;
+
+            HOperatorSet.GetRegionContour(Roi1, out rows, out columns);
+            int[] co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, rows.IArr[0], columns.IArr[0]);
             HOperatorSet.DispText(viewController1.viewPort.HalconWindow, res[0], "window", co[0], co[1], "black", "box", "true");
-            (new HImage(image2)).FindDataCode2d(DataCodeHandle, new HTuple(), new HTuple(), out ResultHandles, out DecodedDataStrings);
-            res[1] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString() : "error";
-            co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, height / 2, width / 2);
+            HOperatorSet.GetRegionContour(Roi2, out rows, out columns);
+            co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, rows.IArr[0], columns.IArr[0]);
             HOperatorSet.DispText(viewController1.viewPort.HalconWindow, res[1], "window", co[0], co[1], "black", "box", "true");
 
             image1.Dispose();
             image2.Dispose();
-            Roi1.Dispose();
-            Roi2.Dispose();
+
             DataCodeHandle.Dispose();
             return res;
         }
@@ -52,7 +64,6 @@ namespace JasperUI.Model
             Camera.GrabImageVoid();
             viewController1.addIconicVar(GlobalVars.Camera.CurrentImage);
             viewController1.repaint();
-            //GlobalVars.viewController1.viewPort.HalconWindow.SetColor
         }
         private static int[] GetCorinWindow(HWindow window, HObject image, int r, int c)
         {

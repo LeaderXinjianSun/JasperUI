@@ -124,7 +124,7 @@
                 </StackPanel>
             </GroupBox>
         </Grid>
-        <Grid Grid.Row="1" Name="CameraPage" Visibility="Collapsed">
+        <Grid Grid.Row="1" Name="CameraPage" Visibility="Visible">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"></RowDefinition>
                 <RowDefinition></RowDefinition>
@@ -141,10 +141,19 @@
                     <RowDefinition></RowDefinition>
                     <RowDefinition></RowDefinition>
                 </Grid.RowDefinitions>
-                <StackPanel Grid.Row="2" VerticalAlignment="Center">
+                <StackPanel Grid.Row="1" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <Button Name="GrapButton" Width="100" Height="30" Margin="10,0" Content="拍照" Click="GrapButton_Click"></Button>
+                        <Button Width="100" Height="30" Margin="10,0" Content="拍照" Click="GrapImage_Click"></Button>
                     </StackPanel>
+                </StackPanel>
+                <StackPanel Grid.Row="2" VerticalAlignment="Center">
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Name="GrapButton" Width="80" Height="30" Margin="10,0" Content="扫码" Click="GrapButton_Click"></Button>
+                        <Button Width="80" Height="30" Margin="10,0" Content="框1" Click="DrawRec1_Click"></Button>
+                        <Button Width="80" Height="30" Margin="10,0" Content="框2" Click="DrawRec2_Click"></Button>
+                    </StackPanel>
+
                 </StackPanel>
             </Grid>
             
