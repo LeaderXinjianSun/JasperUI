@@ -124,7 +124,7 @@
                 </StackPanel>
             </GroupBox>
         </Grid>
-        <Grid Grid.Row="1" Name="CameraPage" Visibility="Visible">
+        <Grid Grid.Row="1" Name="CameraPage" Visibility="Collapsed">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"></RowDefinition>
                 <RowDefinition></RowDefinition>

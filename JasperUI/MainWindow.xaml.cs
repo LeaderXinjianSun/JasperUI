@@ -81,6 +81,11 @@ namespace JasperUI
 
             }));
         }
+        void LoadedCallback()
+        {
+            Init();
+            AddMessage("软件加载完成");
+        }
         void Init()
         {
             try
@@ -511,10 +516,12 @@ namespace JasperUI
             }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Init();
-            AddMessage("软件加载完成");
+            
+            await Task.Delay(1);
+            CameraPage.Visibility = Visibility.Visible;
+            LoadedCallback();
             CameraPage.Visibility = Visibility.Collapsed;
         }
     }

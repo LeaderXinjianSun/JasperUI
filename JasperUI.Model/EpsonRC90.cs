@@ -45,7 +45,8 @@ namespace JasperUI.Model
         public EpsonRC90()
         {
             ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
-            udp.Connect(10999, 13800, "192.168.0.130");
+            string MCUIp = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp", "192.168.0.130");
+            udp.Connect(10999, 13800, MCUIp);
             for (int i = 0; i < 96; i++)
             {
                 BarInfo[i] = new ProducInfo();
