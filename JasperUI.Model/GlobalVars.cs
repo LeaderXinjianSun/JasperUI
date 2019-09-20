@@ -44,14 +44,14 @@ namespace JasperUI.Model
 
             viewController1.viewPort.HalconWindow.SetColor("green");
             viewController1.repaint();
-            HTuple rows, columns;
+            HTuple area, rows, columns;
 
-            HOperatorSet.GetRegionContour(Roi1, out rows, out columns);
-            int[] co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, rows.IArr[0], columns.IArr[0]);
-            HOperatorSet.DispText(viewController1.viewPort.HalconWindow, res[0], "window", co[0], co[1], "black", "box", "true");
-            HOperatorSet.GetRegionContour(Roi2, out rows, out columns);
-            co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, rows.IArr[0], columns.IArr[0]);
-            HOperatorSet.DispText(viewController1.viewPort.HalconWindow, res[1], "window", co[0], co[1], "black", "box", "true");
+            HOperatorSet.AreaCenter(Roi1, out area, out rows, out columns);
+            int[] co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            HOperatorSet.DispText(viewController1.viewPort.HalconWindow, "① " + res[0], "window", co[0], co[1], "black", "box", "true");
+            HOperatorSet.AreaCenter(Roi2, out area, out rows, out columns);
+            co = GetCorinWindow(viewController1.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            HOperatorSet.DispText(viewController1.viewPort.HalconWindow, "② " + res[1], "window", co[0], co[1], "black", "box", "true");
 
             image1.Dispose();
             image2.Dispose();
