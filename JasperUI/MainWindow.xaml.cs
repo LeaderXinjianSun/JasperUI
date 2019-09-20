@@ -20,6 +20,8 @@ using System.IO;
 using ViewROI;
 using BingLibrary.HVision;
 using HalconDotNet;
+using System.Diagnostics;
+using System.Data;
 
 namespace JasperUI
 {
@@ -43,9 +45,10 @@ namespace JasperUI
         bool EpsonStatusReady = false;
         private EpsonRC90 epsonRC90;
         private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
-        Fx5u pLC;
+        
         Leisai ls;
         List<int[]> ExIoIn, ExIoOut;
+        long SWms = 0;
         #endregion
         public MainWindow()
         {
@@ -162,13 +165,13 @@ namespace JasperUI
                             if (GlobalVars.Camera.OpenCamera("CAM1","GigEVision"))
                             {
                                 MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "COM2", "COM0");
-                                GlobalVars.UpScan = new Scan();
-                                GlobalVars.UpScan.ini(COM);
-                                Async.RunFuncAsync(ls.Run, null);
+                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
+                                GlobalVars.Scan1 = new Scan();
+                                GlobalVars.Scan1.ini(COM);
+                                Async.RunFuncAsync(ls.Run, null);//刷IO卡
                                 string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
                                 int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
-                                pLC = new Fx5u(ip, port);
+                                GlobalVars.Fx5u = new Fx5u(ip, port);
                                 Async.RunFuncAsync(IORun, null);
                                 Run();
                             }
@@ -304,19 +307,133 @@ namespace JasperUI
                 EllipseCameraState.Fill = Brushes.Red;
             }
             #endregion
+            #region 其他
+            CycleText.Text = SWms.ToString() + " ms";
+            #endregion
         }
         async void Run()
         {
+            
+            Stopwatch sw = new Stopwatch();
+            bool m2000 = false,m2004 = false;
+            bool[] M2000;
+            bool first = true;
             while (true)
             {
+                sw.Restart();
                 await Task.Delay(100);
                 #region UpdateUI
-                PLCState = pLC.Connect;
+                PLCState = GlobalVars.Fx5u.Connect;
                 CameraState = GlobalVars.Camera.Connected;
                 RobotState = epsonRC90.CtrlStatus && epsonRC90.IOReceiveStatus && epsonRC90.TestReceiveStatus && epsonRC90.TestSendStatus;
                 UpdateUI();
                 #endregion
+                #region work
+                try
+                {
+                    M2000 = await Task.Run<bool[]>(() => {
+                        return GlobalVars.Fx5u.ReadMultiM("M2000", 16);
+                    });
+                    if (M2000 != null)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                            m2000 = M2000[0];
+                            m2004 = M2000[4];
+                        }
+                        if (m2000 != M2000[0])
+                        {
+                            m2000 = M2000[0];
+                            if (m2000)
+                            {
+                                GlobalVars.Fx5u.SetM("M2000", false);
+                                GlobalVars.Fx5u.SetM("M2500", false);
+                                GlobalVars.Fx5u.SetM("M2501", false);
+                                GlobalVars.Fx5u.SetM("M2510", false);
+                                GlobalVars.Fx5u.SetM("M2511", false);
+                                GlobalVars.Scan1.GetBarCode((string barcode) =>
+                                {
+                                    AddMessage("测试机1轨道扫码:" + barcode);
+                                    if (barcode != "Error")
+                                    {
+                                        Mysql mysql = new Mysql();
+                                        if (mysql.Connect())
+                                        {
+                                            string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
+                                            DataSet ds = mysql.Select(stm);
+                                            DataTable dt = ds.Tables["table0"];
+                                            if (dt.Rows.Count > 0)
+                                            {
+                                                if (dt.Rows[0]["STATUS"] == DBNull.Value)
+                                                {
+                                                    stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                    mysql.executeQuery(stm);
+                                                    epsonRC90.BordBarcode = barcode;
+                                                    AddMessage("板 " + barcode + " 绑定");
+                                                    GlobalVars.Fx5u.SetM("M2511", true);
+                                                }
+                                                else
+                                                {
+                                                    if ((string)dt.Rows[0]["STATUS"] == "OFF")
+                                                    {
+                                                        stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                        mysql.executeQuery(stm);
+                                                        epsonRC90.BordBarcode = barcode;
+                                                        AddMessage("板 " + barcode + " 绑定");
+                                                        GlobalVars.Fx5u.SetM("M2511", true);
+                                                    }
+                                                    else
+                                                    {
+                                                        AddMessage("板 " + barcode + " 已测过");
+                                                        GlobalVars.Fx5u.SetM("M2510", true);
+                                                    }
+                                                }
 
+                                            }
+                                            else
+                                            {
+                                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                mysql.executeQuery(stm);
+                                                epsonRC90.BordBarcode = barcode;
+                                                AddMessage("板 " + barcode + " 绑定");
+                                                GlobalVars.Fx5u.SetM("M2511", true);
+                                            }
+                                            GlobalVars.Fx5u.SetM("M2500", true);
+                                        }
+                                        else
+                                        {
+                                            AddMessage("Mysql数据库查询失败");
+                                            GlobalVars.Fx5u.SetM("M2501", true);
+                                        }
+                                        mysql.DisConnect();
+                                        
+                                    }
+                                    else
+                                    {
+                                        GlobalVars.Fx5u.SetM("M2501", true);
+                                    }
+                                });
+                            }
+                        }
+                        if (m2004 != M2000[4])
+                        {
+                            m2004 = M2000[4];
+                            if (m2004)
+                            {
+                                GlobalVars.Fx5u.SetM("M2004", false);
+                                if (epsonRC90.TestSendStatus)
+                                {
+                                    await epsonRC90.TestSentNet.SendAsync("RobotCanGet");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                { }
+                #endregion
+                SWms = sw.ElapsedMilliseconds;
             }
         }
         void IORun()
@@ -456,15 +573,20 @@ namespace JasperUI
         private void FuncButtonClick(object sender, RoutedEventArgs e)
         {
             //epsonRC90.BottomScanGetBarCodeCallback("G5Y936600AZP2CQ1S");
-            try
-            {
-                GlobalVars.GetImage();
-                GlobalVars.GetBarcode();
-            }
-            catch (Exception ex)
-            {
-                AddMessage(ex.Message);
-            }
+            //try
+            //{
+            //    GlobalVars.GetImage();
+            //    GlobalVars.GetBarcode();
+            //}
+            //catch (Exception ex)
+            //{
+            //    AddMessage(ex.Message);
+            //}
+            //GlobalVars.Scan1.GetBarCode((string str) => { AddMessage(str); });
+            ////GlobalVars.Fx5u.WriteMultW("D1000", new short[3] { 1, 2, 3 });
+            //var A = GlobalVars.Fx5u.ReadMultiW("D1000",2);
+            //AddMessage(A[0].ToString() + " " + A[1].ToString());
+            ////GlobalVars.Fx5u.WriteD("D1000",256);
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)

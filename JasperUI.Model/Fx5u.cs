@@ -7,6 +7,7 @@ using HslCommunication;
 using HslCommunication.Profinet.Melsec;
 using BingLibrary.hjb.file;
 using BingLibrary.hjb.tools;
+using System.Diagnostics;
 
 namespace JasperUI.Model
 {
@@ -27,18 +28,20 @@ namespace JasperUI.Model
             }
         }
         public bool Connect { get { return mConnect; } }
-        string ip = "192.168.1.50";
+        string IP;
         public MelsecMcNet melsec_net = null;
-        private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
+        //private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
         public bool[] FX5UOUT;
         public bool[] FX5UIN;
+        public long SWms = 0;
         public Fx5u(string ip,int port)
         {
+            IP = ip;
             melsec_net = new MelsecMcNet(ip, port);
             melsec_net.ConnectTimeOut = 2000;
             melsec_net.ReceiveTimeOut = 200;
             OperateResult connect = melsec_net.ConnectServer();
-            FX5UOUT = new bool[100];
+            FX5UOUT = new bool[64];
             if (connect.IsSuccess)
             {
                 _Connect = true;
@@ -49,8 +52,13 @@ namespace JasperUI.Model
                 _Connect = false;
                 Console.WriteLine("连接失败");
             }
-            Async.RunFuncAsync(Run, null);
+            //Async.RunFuncAsync(Run, null);
         }
+        /// <summary>
+        /// 读双字
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
         public int ReadW(string address)
         {
             OperateResult<byte[]> read = melsec_net.Read(address, 1);
@@ -71,7 +79,13 @@ namespace JasperUI.Model
                 return -1;
             }
         }
-        public int[] ReadMultiD(string address,ushort length)
+        /// <summary>
+        /// 读多个双字
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public int[] ReadMultiW(string address,ushort length)
         {
             OperateResult<Int32[]> read = melsec_net.ReadInt32(address, length);
             if(read.IsSuccess)
@@ -137,7 +151,29 @@ namespace JasperUI.Model
                 _Connect = false;
             }
         }
-        public void WriteSingleD(string address, int value)
+        /// <summary>
+        /// 写双字
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="value"></param>
+        public void WriteW(string address, int value)
+        {
+            OperateResult write = melsec_net.Write(address, value);
+            if (write.IsSuccess)
+            {
+                _Connect = true;
+            }
+            else
+            {
+                _Connect = false;
+            }
+        }
+        /// <summary>
+        /// 写多个单字
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="value"></param>
+        public void WriteMultD(string address, short[] value)
         {
             OperateResult write = melsec_net.Write(address, value);
             if (write.IsSuccess)
@@ -151,8 +187,10 @@ namespace JasperUI.Model
         }
         private void Run()
         {
+            Stopwatch sw = new Stopwatch();
             while (true)
             {
+                sw.Restart();
                 OperateResult<bool[]> read = melsec_net.ReadBool("M2000", 100);
                 if (read.IsSuccess)
                 {
@@ -173,7 +211,7 @@ namespace JasperUI.Model
                     _Connect = false;
                 }
                 System.Threading.Thread.Sleep(20);
-
+                SWms = sw.ElapsedMilliseconds;
             }
         }
     }

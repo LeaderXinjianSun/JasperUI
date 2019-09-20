@@ -126,7 +126,7 @@
         </Grid>
         <Grid Grid.Row="1" Name="CameraPage" Visibility="Collapsed">
             <Grid.RowDefinitions>
-                <RowDefinition Height="2*"></RowDefinition>
+                <RowDefinition></RowDefinition>
                 <RowDefinition></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -176,6 +176,9 @@
             </StatusBarItem>
             <StatusBarItem>
                 <Ellipse Name="EllipseCameraState" Style="{StaticResource EllipseStatusBase}"></Ellipse>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="CycleText"></TextBlock>
             </StatusBarItem>
         </StatusBar>
     </Grid>

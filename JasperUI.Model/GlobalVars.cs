@@ -11,8 +11,8 @@ namespace JasperUI.Model
 {
     public static class GlobalVars
     {
-        public static Scan UpScan;
-
+        public static Scan Scan1;
+        public static Fx5u Fx5u;
         public static HWndCtrl viewController1;
         public static ROIController roiController1;
         public static CameraOperate Camera = new CameraOperate();

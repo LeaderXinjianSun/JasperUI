@@ -321,7 +321,10 @@ namespace JasperUI.Model
                                     if (strs.Length == 10)
                                     {
                                         SaveResult(strs);
-                                    }                                   
+                                    }
+                                    break;
+                                case "RobotGetFinish":
+                                    GlobalVars.Fx5u.SetM("M2508", true);
                                     break;
                                 default:
                                     ModelPrint("无效指令： " + s);
@@ -511,49 +514,57 @@ namespace JasperUI.Model
                 int[] barindex = new int[2];
                 barindex[0] = index1 + index * 8;
                 barindex[1] = index1 + 4 + index * 8;
-                
-                for (int i = 0; i < 2; i++)
+                try
                 {
-                    if (barcode[i] != "error")
+                    for (int i = 0; i < 2; i++)
                     {
-                        bool isAoi = false;
-                        Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
-                        string sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
-                        DataSet ds = oraDB.executeQuery(sqlstr);
-                        DataTable dt1 = ds.Tables[0];
-                        if ((string)dt1.Rows[0][0] == "0")
+                        if (barcode[i] != "error")
                         {
-                            isAoi = true;
+                            bool isAoi = false;
+                            Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                            string sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                            DataSet ds = oraDB.executeQuery(sqlstr);
+                            DataTable dt1 = ds.Tables[0];
+                            if ((string)dt1.Rows[0][0] == "0")
+                            {
+                                isAoi = true;
+                            }
+                            //条码 板条码 产品状态 日期 时间
+                            BarInfo[barindex[i]].Barcode = barcode[i];
+                            BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                            BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
+                            BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                            BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
                         }
-                        //条码 板条码 产品状态 日期 时间
-                        BarInfo[barindex[i]].Barcode = barcode[i];
-                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                        BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
-                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                        else
+                        {
+                            BarInfo[barindex[i]].Barcode = "FAIL";
+                            BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                            BarInfo[barindex[i]].Status = 2;
+                            BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                            BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                        }
+
+                        string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                        Mysql mysql = new Mysql();
+                        if (mysql.Connect())
+                        {
+                            string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[barindex[i]].Barcode + "','"
+                            + BordBarcode + "','" + BarInfo[barindex[i]].TDate + "','" + BarInfo[barindex[i]].TTime + "','" + (barindex[i] + 1).ToString() + "','" + BarInfo[barindex[i]].Status.ToString() + "')";
+                            mysql.executeQuery(stm);
+                        }
+                        mysql.DisConnect();
                     }
-                    else
-                    {
-                        BarInfo[barindex[i]].Barcode = "FAIL";
-                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                        BarInfo[barindex[i]].Status = 2;
-                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
-                    }
-                    
-                    string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                    Mysql mysql = new Mysql();
-                    if (mysql.Connect())
-                    {
-                        string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[barindex[i]].Barcode + "','"
-                        + BordBarcode + "','" + BarInfo[barindex[i]].TDate + "','" + BarInfo[barindex[i]].TTime + "','" + (barindex[i] + 1).ToString() + "','" + BarInfo[barindex[i]].Status.ToString() + "')";
-                        mysql.executeQuery(stm);
-                    }
-                    mysql.DisConnect();
+                    string retstr = mes[2] + ";" + BarInfo[barindex[0]].Status.ToString() + ";" + BarInfo[barindex[1]].Status.ToString();
+                    await TestSentNet.SendAsync("BarcodeInfo1;" + retstr);
+                    ModelPrint("BarcodeInfo1;" + retstr);
                 }
-                string retstr = mes[2] + ";" + BarInfo[barindex[0]].Status.ToString() + ";" + BarInfo[barindex[1]].Status.ToString();
-                await TestSentNet.SendAsync("BarcodeInfo1;" + retstr);
-                ModelPrint("BarcodeInfo1;" + retstr);
+                catch (Exception ex)
+                {
+                    ModelPrint(ex.Message);
+
+                }
+                
             });
         }
         async void SendBarcode(int index)
