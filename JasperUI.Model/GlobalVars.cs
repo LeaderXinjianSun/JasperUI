@@ -11,11 +11,15 @@ namespace JasperUI.Model
 {
     public static class GlobalVars
     {
-        public static Scan Scan1;
+        public static Scan Scan1, Scan2;
         public static Fx5u Fx5u;
         public static HWndCtrl viewController1;
         public static ROIController roiController1;
         public static CameraOperate Camera = new CameraOperate();
+
+        public static HWndCtrl viewController2;
+        public static ROIController roiController2;
+        public static CameraOperate Camera2 = new CameraOperate();
 
         static HTuple ResultHandles = new HTuple();
         static HTuple DecodedDataStrings = new HTuple();
@@ -64,6 +68,54 @@ namespace JasperUI.Model
             Camera.GrabImageVoid();
             viewController1.addIconicVar(GlobalVars.Camera.CurrentImage);
             viewController1.repaint();
+        }
+        static HTuple ResultHandles2 = new HTuple();
+        static HTuple DecodedDataStrings2 = new HTuple();
+        static HDataCode2D DataCodeHandle2 = new HDataCode2D();
+        public static string[] GetBarcode2()
+        {
+            string[] res = new string[2];
+            DataCodeHandle2 = new HDataCode2D("Data Matrix ECC 200", new HTuple(), new HTuple());
+
+            HObject image1, image2;
+            HObject Roi1, Roi2;
+            HObject symbolXLD1, symbolXLD2;
+            HOperatorSet.ReadObject(out Roi1, System.Environment.CurrentDirectory + "\\rectangle3.hobj");
+            HOperatorSet.ReadObject(out Roi2, System.Environment.CurrentDirectory + "\\rectangle4.hobj");
+            HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi1, out image1);
+            HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi2, out image2);
+            HOperatorSet.FindDataCode2d(new HImage(image1), out symbolXLD1, DataCodeHandle2, new HTuple(), new HTuple(), out ResultHandles2, out DecodedDataStrings2);
+            res[0] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+            HOperatorSet.FindDataCode2d(new HImage(image2), out symbolXLD2, DataCodeHandle2, new HTuple(), new HTuple(), out ResultHandles2, out DecodedDataStrings2);
+            res[1] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+
+            viewController2.addIconicVar(symbolXLD1);
+            viewController2.addIconicVar(symbolXLD2);
+            viewController2.addIconicVar(Roi1);
+            viewController2.addIconicVar(Roi2);
+
+            viewController2.viewPort.HalconWindow.SetColor("green");
+            viewController2.repaint();
+            HTuple area, rows, columns;
+
+            HOperatorSet.AreaCenter(Roi1, out area, out rows, out columns);
+            int[] co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            HOperatorSet.DispText(viewController2.viewPort.HalconWindow, "① " + res[0], "window", co[0], co[1], "black", "box", "true");
+            HOperatorSet.AreaCenter(Roi2, out area, out rows, out columns);
+            co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            HOperatorSet.DispText(viewController2.viewPort.HalconWindow, "② " + res[1], "window", co[0], co[1], "black", "box", "true");
+
+            image1.Dispose();
+            image2.Dispose();
+
+            DataCodeHandle2.Dispose();
+            return res;
+        }
+        public static void GetImage2()
+        {
+            Camera2.GrabImageVoid();
+            viewController2.addIconicVar(GlobalVars.Camera.CurrentImage);
+            viewController2.repaint();
         }
         private static int[] GetCorinWindow(HWindow window, HObject image, int r, int c)
         {

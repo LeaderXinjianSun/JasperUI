@@ -75,11 +75,6 @@ namespace JasperUI.Model
         {
             return m_connect_state;
         }
-        public string sfc_getServerDateTime()
-        {
-            DataSet da = executeQuery("select to_char(SYSDATE,'YYYY-MM-DD HH24:MI:SS') sDate FROM DUAL");
-            return da.Tables[0].Rows[0][0].ToString();
-        }
         public DataSet executeQuery(string strSQL)
         {
             DataSet da = new DataSet();
@@ -94,6 +89,27 @@ namespace JasperUI.Model
                 throw new Exception(ex.Message);
             }
             return da;
+        }
+        public string OraclDateTime()
+        {
+            try
+            {
+                DataSet da = executeQuery("select to_char(SYSDATE,'YYYY-MM-DD HH24:MI:SS') sDate FROM DUAL");
+                setLocalTime(da.Tables[0].Rows[0][0].ToString());
+                return da.Tables[0].Rows[0][0].ToString();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+        }
+        private void setLocalTime(string strDateTime)
+        {
+            DateTimeUtility.SYSTEMTIME st = new DateTimeUtility.SYSTEMTIME();
+            DateTime dt = Convert.ToDateTime(strDateTime);
+            st.FromDateTime(dt);
+            DateTimeUtility.SetLocalTime(ref st);
         }
     }
 }

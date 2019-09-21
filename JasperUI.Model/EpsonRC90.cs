@@ -21,7 +21,7 @@ namespace JasperUI.Model
         public TcpIpClient TestSentNet = new TcpIpClient();
         public TcpIpClient TestReceiveNet = new TcpIpClient();
         public UDPClient udp = new UDPClient();
-        string ip = "192.168.1.2";
+        string Ip = "192.168.1.2";
         private bool isLogined = false;
         public bool[] Rc90In = new bool[100];
         public bool[] Rc90Out = new bool[100];
@@ -34,7 +34,7 @@ namespace JasperUI.Model
         //条码 板条码 索引 产品状态 日期 时间
         public ProducInfo[] BarInfo = new ProducInfo[96];
         public string BordBarcode = "Null";
-        
+        public string Name;
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -42,11 +42,13 @@ namespace JasperUI.Model
         public event PrintEventHandler EpsonStatusUpdate;
         #endregion
         #region 构造函数
-        public EpsonRC90()
+        public EpsonRC90(string ip,string mcuip,int mcuport,string name)
         {
-            ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
-            string MCUIp = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp", "192.168.0.130");
-            udp.Connect(10999, 13800, MCUIp);
+            Name = name;
+            Ip = ip;
+            string MCUIp = mcuip;
+            int udpport = mcuport;
+            udp.Connect(udpport, 13800, MCUIp);
             for (int i = 0; i < 96; i++)
             {
                 BarInfo[i] = new ProducInfo();
@@ -81,11 +83,11 @@ namespace JasperUI.Model
                     if (!CtrlNet.tcpConnected)
                     {
                         isLogined = false;
-                        bool r1 = await CtrlNet.Connect(ip, 5000);
+                        bool r1 = await CtrlNet.Connect(Ip, 5000);
                         if (r1)
                         {
                             CtrlStatus = true;
-                            ModelPrint("机械手CtrlNet连接");
+                            ModelPrint(Name + "机械手CtrlNet连接");
                         }
                         else
                             CtrlStatus = false;
@@ -142,11 +144,11 @@ namespace JasperUI.Model
                     await Task.Delay(1000);
                     if (!IOReceiveNet.tcpConnected)
                     {
-                        bool r1 = await IOReceiveNet.Connect(ip, 2007);
+                        bool r1 = await IOReceiveNet.Connect(Ip, 2007);
                         if (r1)
                         {
                             IOReceiveStatus = true;
-                            ModelPrint("机械手IOReceiveNet连接");
+                            ModelPrint(Name + "机械手IOReceiveNet连接");
 
                         }
                         else
@@ -181,7 +183,7 @@ namespace JasperUI.Model
                     {
                         IOReceiveNet.tcpConnected = false;
                         IOReceiveStatus = false;
-                        ModelPrint("机械手IOReceiveNet断开");
+                        ModelPrint(Name + "机械手IOReceiveNet断开");
                     }
                     else
                     {
@@ -220,11 +222,11 @@ namespace JasperUI.Model
                     await Task.Delay(1000);
                     if (!TestSentNet.tcpConnected)
                     {
-                        bool r1 = await TestSentNet.Connect(ip, 2000);
+                        bool r1 = await TestSentNet.Connect(Ip, 2000);
                         if (r1)
                         {
                             TestSendStatus = true;
-                            ModelPrint("机械手TestSentNet连接");
+                            ModelPrint(Name + "机械手TestSentNet连接");
 
                         }
                         else
@@ -232,7 +234,11 @@ namespace JasperUI.Model
                     }
                 }
                 else
-                { await Task.Delay(15000); }
+                { await Task.Delay(15000);
+                    TestSentNet.IsOnline();
+                    if (!TestSentNet.tcpConnected)
+                        ModelPrint(Name + "机械手TestSentNet断开");
+                }
             }
         }
         public async void checkTestReceiveNet()
@@ -245,11 +251,11 @@ namespace JasperUI.Model
                     await Task.Delay(1000);
                     if (!TestReceiveNet.tcpConnected)
                     {
-                        bool r1 = await TestReceiveNet.Connect(ip, 2001);
+                        bool r1 = await TestReceiveNet.Connect(Ip, 2001);
                         if (r1)
                         {
                             TestReceiveStatus = true;
-                            ModelPrint("机械手TestReceiveNet连接");
+                            ModelPrint(Name + "机械手TestReceiveNet连接");
 
                         }
                         else
@@ -282,19 +288,32 @@ namespace JasperUI.Model
                     {
                         TestReceiveNet.tcpConnected = false;
                         TestReceiveStatus = false;
-                        ModelPrint("机械手TestReceiveNet断开");
+                        ModelPrint(Name + "机械手TestReceiveNet断开");
                     }
                     else
                     {
-                        ModelPrint("TestRev: " + s);
+                        ModelPrint(Name + "TestRev: " + s);
                         try
                         {
                             string[] strs = s.Split(';');
                             switch (strs[0])
                             {
                                 case "ScanBarcode":
-                                    GlobalVars.GetImage();
-                                    String[] Barcodes = GlobalVars.GetBarcode();
+                                    String[] Barcodes = new string[2];
+                                    switch (Name)
+                                    {
+                                        case "第1台":
+                                            GlobalVars.GetImage();
+                                            Barcodes = GlobalVars.GetBarcode();
+                                            break;
+                                        case "第2台":
+                                            GlobalVars.GetImage2();
+                                            Barcodes = GlobalVars.GetBarcode2();
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
                                     if (strs.Length > 1)
                                     {
                                         BottomScanGetBarCodeCallback(Barcodes, strs);
@@ -324,16 +343,27 @@ namespace JasperUI.Model
                                     }
                                     break;
                                 case "RobotGetFinish":
-                                    GlobalVars.Fx5u.SetM("M2508", true);
+                                    switch (Name)
+                                    {
+                                        case "第1台":
+                                            GlobalVars.Fx5u.SetM("M2508", true);
+                                            break;
+                                        case "第2台":
+                                            GlobalVars.Fx5u.SetM("M2509", true);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    
                                     break;
                                 default:
-                                    ModelPrint("无效指令： " + s);
+                                    ModelPrint(Name + "无效指令： " + s);
                                     break;
                             }
                         }
                         catch (Exception ex)
                         {
-                            ModelPrint(ex.Message);
+                            ModelPrint(Name + ex.Message);
                         }
                     }
                 }
@@ -346,7 +376,7 @@ namespace JasperUI.Model
         public async void BottomScanGetBarCodeCallback(string barcode)
         {
             //barcode = "G5Y936600AZP2CQ1S";
-            ModelPrint(barcode);
+            ModelPrint(Name + barcode);
             await Task.Run(async () =>
             {
                 try
@@ -445,7 +475,19 @@ namespace JasperUI.Model
                                     }
                                 }
                                 string retstr = "";
-                                string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                string mid = "";
+                                switch (Name)
+                                {
+                                    case "第1台":
+                                        mid = "MachineID";
+                                        break;
+                                    case "第2台":
+                                        mid = "MachineID2";
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", mid, "Jasper01");
                                 Mysql mysql = new Mysql();
                                 if (mysql.Connect())
                                 {
@@ -464,11 +506,11 @@ namespace JasperUI.Model
                                 retstr = retstr.Substring(0, retstr.Length - 1);
 
                                 await TestSentNet.SendAsync("BarcodeInfo;OK;" + retstr);
-                                ModelPrint("BarcodeInfo;OK;" + retstr);
+                                ModelPrint(Name + "BarcodeInfo;OK;" + retstr);
                             }
                             else
                             {
-                                ModelPrint("条码" + PNLBarcode + "查询失败");
+                                ModelPrint(Name + "条码" + PNLBarcode + "查询失败");
                                 if (TestSendStatus)
                                 {
                                     await TestSentNet.SendAsync("BarcodeInfo;NG");
@@ -477,7 +519,7 @@ namespace JasperUI.Model
                         }
                         else
                         {
-                            ModelPrint("条码" + barcode + "查询失败");
+                            ModelPrint(Name + "条码" + barcode + "查询失败");
                             if (TestSendStatus)
                             {
                                 await TestSentNet.SendAsync("BarcodeInfo;NG");
@@ -486,7 +528,7 @@ namespace JasperUI.Model
                     }
                     else
                     {
-                        ModelPrint("数据库未连接");
+                        ModelPrint(Name + "数据库未连接");
                         if (TestSendStatus)
                         {
                             await TestSentNet.SendAsync("BarcodeInfo;NG");
@@ -496,7 +538,7 @@ namespace JasperUI.Model
                 }
                 catch (Exception ex)
                 {
-                    ModelPrint(ex.Message);
+                    ModelPrint(Name + ex.Message);
                     if (TestSendStatus)
                     {
                         await TestSentNet.SendAsync("BarcodeInfo;NG");
@@ -507,7 +549,7 @@ namespace JasperUI.Model
         }
         public async void BottomScanGetBarCodeCallback(string[] barcode,string[] mes)
         {
-            ModelPrint(barcode[0] + "," + barcode[1]);
+            ModelPrint(Name + barcode[0] + "," + barcode[1]);
             await Task.Run(async()=> {
                 int index = int.Parse(mes[1]);
                 int index1 = int.Parse(mes[2]);
@@ -544,8 +586,19 @@ namespace JasperUI.Model
                             BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
                             BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
                         }
-
-                        string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                        string mid = "";
+                        switch (Name)
+                        {
+                            case "第1台":
+                                mid = "MachineID";
+                                break;
+                            case "第2台":
+                                mid = "MachineID2";
+                                break;
+                            default:
+                                break;
+                        }
+                        string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", mid, "Jasper01");
                         Mysql mysql = new Mysql();
                         if (mysql.Connect())
                         {
@@ -557,11 +610,11 @@ namespace JasperUI.Model
                     }
                     string retstr = mes[2] + ";" + BarInfo[barindex[0]].Status.ToString() + ";" + BarInfo[barindex[1]].Status.ToString();
                     await TestSentNet.SendAsync("BarcodeInfo1;" + retstr);
-                    ModelPrint("BarcodeInfo1;" + retstr);
+                    ModelPrint(Name + "BarcodeInfo1;" + retstr);
                 }
                 catch (Exception ex)
                 {
-                    ModelPrint(ex.Message);
+                    ModelPrint(Name + ex.Message);
 
                 }
                 
@@ -575,7 +628,7 @@ namespace JasperUI.Model
                 str += BarInfo[i + index * 8].Barcode + "|";
             }
             str += "0";
-            ModelPrint(str);
+            ModelPrint(Name + str);
             bool r = await udp.SendAsync(str);
         }
         async void SaveResult(string[] rststr)

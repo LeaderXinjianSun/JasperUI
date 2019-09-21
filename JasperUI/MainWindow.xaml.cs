@@ -43,27 +43,66 @@ namespace JasperUI
         bool EpsonStatusPaused = false;
         bool EpsonStatusRunning = false;
         bool EpsonStatusReady = false;
-        private EpsonRC90 epsonRC90;
+
+        bool CameraState2 = false;
+        bool RobotState2 = false;
+        bool EpsonStatusAuto2 = false;
+        bool EpsonStatusWarning2 = false;
+        bool EpsonStatusSError2 = false;
+        bool EpsonStatusSafeGuard2 = false;
+        bool EpsonStatusEStop2 = false;
+        bool EpsonStatusError2 = false;
+        bool EpsonStatusPaused2 = false;
+        bool EpsonStatusRunning2 = false;
+        bool EpsonStatusReady2 = false;
+        private EpsonRC90 epsonRC90, epsonRC90_2;
         private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
         
         Leisai ls;
-        List<int[]> ExIoIn, ExIoOut;
+        List<int[]> ExIoIn, ExIoOut, ExIoIn2, ExIoOut2;
         long SWms = 0;
         #endregion
         public MainWindow()
         {
             InitializeComponent();
 
-            epsonRC90 = new EpsonRC90();
+            System.Diagnostics.Process[] myProcesses = System.Diagnostics.Process.GetProcessesByName("JasperUI");//获取指定的进程名   
+            if (myProcesses.Length >= 1) //如果可以获取到知道的进程名则说明已经启动
+            {
+                System.Windows.MessageBox.Show("不允许重复打开软件");
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                string ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
+                string mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp", "192.168.0.130");
+                int mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort", "11099"));
+                epsonRC90 = new EpsonRC90(ip, mcuip, mcuport, "第1台");
+                ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp2", "192.168.0.40");
+                mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp2", "192.168.0.130");
+                mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort2", "11099"));
+                epsonRC90_2 = new EpsonRC90(ip, mcuip, mcuport, "第2台");
 
-            GlobalVars.viewController1 = new HWndCtrl(ImageWindow1);
-            GlobalVars.roiController1 = new ROIController();
-            GlobalVars.viewController1.useROIController(GlobalVars.roiController1);
-            GlobalVars.viewController1.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+                GlobalVars.viewController1 = new HWndCtrl(ImageWindow1);
+                GlobalVars.roiController1 = new ROIController();
+                GlobalVars.viewController1.useROIController(GlobalVars.roiController1);
+                GlobalVars.viewController1.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+
+                GlobalVars.viewController2 = new HWndCtrl(ImageWindow2);
+                GlobalVars.roiController2 = new ROIController();
+                GlobalVars.viewController2.useROIController(GlobalVars.roiController2);
+                GlobalVars.viewController2.setViewState(HWndCtrl.MODE_VIEW_MOVE);
 
 
-            epsonRC90.ModelPrint += ModelPrintEventProcess;
-            epsonRC90.EpsonStatusUpdate += EpsonStatusUpdateProcess;
+                epsonRC90.ModelPrint += ModelPrintEventProcess;
+                epsonRC90.EpsonStatusUpdate += EpsonStatusUpdateProcess;
+
+                epsonRC90_2.ModelPrint += ModelPrintEventProcess;
+                epsonRC90_2.EpsonStatusUpdate += EpsonStatusUpdateProcess2;
+            }
+
+
+            
 
         }
         #region 功能函数
@@ -122,6 +161,22 @@ namespace JasperUI
                                     ExIoOut.Add(new int[3] { int.Parse(worksheet.Cells["D" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["E" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["F" + i.ToString()].Value.ToString()) });
                                 }
                             }
+
+                            // get the first worksheet in the workbook
+                            worksheet = package.Workbook.Worksheets[2];
+                            ExIoIn2 = new List<int[]>();//雷赛卡的输入
+                            ExIoOut2 = new List<int[]>();//雷赛卡的输出
+                            for (int i = 2; i <= worksheet.Dimension.End.Row; i++)
+                            {
+                                if (worksheet.Cells["A" + i.ToString()].Value != null && worksheet.Cells["B" + i.ToString()].Value != null && worksheet.Cells["C" + i.ToString()].Value != null)
+                                {
+                                    ExIoIn2.Add(new int[3] { int.Parse(worksheet.Cells["A" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["B" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["C" + i.ToString()].Value.ToString()) });
+                                }
+                                if (worksheet.Cells["D" + i.ToString()].Value != null && worksheet.Cells["E" + i.ToString()].Value != null && worksheet.Cells["F" + i.ToString()].Value != null)
+                                {
+                                    ExIoOut2.Add(new int[3] { int.Parse(worksheet.Cells["D" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["E" + i.ToString()].Value.ToString()), int.Parse(worksheet.Cells["F" + i.ToString()].Value.ToString()) });
+                                }
+                            }
                         }
 
                         ExIoExcelPath = System.Environment.CurrentDirectory + "\\排版.xlsx";
@@ -162,22 +217,45 @@ namespace JasperUI
                                     }
                                 }
                             }
-                            if (GlobalVars.Camera.OpenCamera("CAM1","GigEVision"))
+                            if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
                             {
-                                MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
-                                GlobalVars.Scan1 = new Scan();
-                                GlobalVars.Scan1.ini(COM);
-                                Async.RunFuncAsync(ls.Run, null);//刷IO卡
-                                string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
-                                int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
-                                GlobalVars.Fx5u = new Fx5u(ip, port);
-                                Async.RunFuncAsync(IORun, null);
-                                Run();
+                                if (GlobalVars.Camera.OpenCamera("CAM2", "GigEVision"))
+                                {
+                                    try
+                                    {
+                                        Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                                        if (oraDB.isConnect())
+                                        {
+                                            AddMessage("更新系统时间" + oraDB.OraclDateTime());
+                                            MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                            string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
+                                            GlobalVars.Scan1 = new Scan();
+                                            GlobalVars.Scan1.ini(COM);
+                                            Async.RunFuncAsync(ls.Run, null);//刷IO卡
+                                            string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
+                                            int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
+                                            GlobalVars.Fx5u = new Fx5u(ip, port);
+                                            Async.RunFuncAsync(IORun, null);
+                                            Run();
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        throw;
+                                    }
+                                }
+                                else
+                                {
+                                    throw new Exception("相机2打开失败");
+                                }
+                                
+
+
+
                             }
                             else
                             {
-                                throw new Exception("相机打开失败");
+                                throw new Exception("相机1打开失败");
                             }
 
 
@@ -280,6 +358,79 @@ namespace JasperUI
             {
                 EllipseEpsonStatusReady.Fill = Brushes.Gray;
             }
+
+            if (EpsonStatusAuto2)
+            {
+                EllipseEpsonStatusAuto2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusAuto2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusWarning2)
+            {
+                EllipseEpsonStatusWarning2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusWarning2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusSError2)
+            {
+                EllipseEpsonStatusSError2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusSError2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusSafeGuard2)
+            {
+                EllipseEpsonStatusSafeGuard2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusSafeGuard2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusEStop2)
+            {
+                EllipseEpsonStatusEStop2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusEStop2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusError2)
+            {
+                EllipseEpsonStatusError2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusError2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusPaused2)
+            {
+                EllipseEpsonStatusPaused2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusPaused2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusRunning2)
+            {
+                EllipseEpsonStatusRunning2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusRunning2.Fill = Brushes.Gray;
+            }
+            if (EpsonStatusReady2)
+            {
+                EllipseEpsonStatusReady2.Fill = Brushes.Yellow;
+            }
+            else
+            {
+                EllipseEpsonStatusReady2.Fill = Brushes.Gray;
+            }
             #endregion
             #region 设备连接状态
             if (PLCState)
@@ -298,6 +449,14 @@ namespace JasperUI
             {
                 EllipseRobotState.Fill = Brushes.Red;
             }
+            if (RobotState2)
+            {
+                EllipseRobotState2.Fill = Brushes.Green;
+            }
+            else
+            {
+                EllipseRobotState2.Fill = Brushes.Red;
+            }
             if (CameraState)
             {
                 EllipseCameraState.Fill = Brushes.Green;
@@ -305,6 +464,14 @@ namespace JasperUI
             else
             {
                 EllipseCameraState.Fill = Brushes.Red;
+            }
+            if (CameraState2)
+            {
+                EllipseCameraState2.Fill = Brushes.Green;
+            }
+            else
+            {
+                EllipseCameraState2.Fill = Brushes.Red;
             }
             #endregion
             #region 其他
@@ -325,7 +492,9 @@ namespace JasperUI
                 #region UpdateUI
                 PLCState = GlobalVars.Fx5u.Connect;
                 CameraState = GlobalVars.Camera.Connected;
+                CameraState2 = GlobalVars.Camera2.Connected;
                 RobotState = epsonRC90.CtrlStatus && epsonRC90.IOReceiveStatus && epsonRC90.TestReceiveStatus && epsonRC90.TestSendStatus;
+                RobotState2 = epsonRC90_2.CtrlStatus && epsonRC90_2.IOReceiveStatus && epsonRC90_2.TestReceiveStatus && epsonRC90_2.TestSendStatus;
                 UpdateUI();
                 #endregion
                 #region work
@@ -421,10 +590,12 @@ namespace JasperUI
                             m2004 = M2000[4];
                             if (m2004)
                             {
+                                AddMessage("测试机1发送:RobotCanGet");
                                 GlobalVars.Fx5u.SetM("M2004", false);
                                 if (epsonRC90.TestSendStatus)
                                 {
                                     await epsonRC90.TestSentNet.SendAsync("RobotCanGet");
+
                                 }
                             }
                         }
@@ -476,6 +647,41 @@ namespace JasperUI
                             break;
                     }
                 }
+                foreach (int[] item in ExIoIn2)//雷赛卡的输入
+                {
+                    switch (item[1])
+                    {
+                        case 0:
+                            epsonRC90_2.Rc90In[item[0]] = ls.Input[item[2]];
+                            break;
+                        case 1:
+                            epsonRC90_2.Rc90In[item[0]] = ls.Input[item[2] + 32];
+                            break;
+                        case 2:
+                            epsonRC90_2.Rc90In[item[0]] = ls.Input[item[2] + 64];
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+                foreach (int[] item in ExIoOut2)
+                {
+                    switch (item[1])
+                    {
+                        case 0:
+                            ls.Output[item[2]] = epsonRC90_2.Rc90Out[item[0]];
+                            break;
+                        case 1:
+                            ls.Output[item[2] + 32] = epsonRC90_2.Rc90Out[item[0]];
+                            break;
+                        case 2:
+                            ls.Output[item[2] + 64] = epsonRC90_2.Rc90Out[item[0]];
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
         }
         #endregion
@@ -495,6 +701,18 @@ namespace JasperUI
             EpsonStatusPaused = str[8] == '1';
             EpsonStatusRunning = str[9] == '1';
             EpsonStatusReady = str[10] == '1';
+        }
+        private void EpsonStatusUpdateProcess2(string str)
+        {
+            EpsonStatusAuto2 = str[2] == '1';
+            EpsonStatusWarning2 = str[3] == '1';
+            EpsonStatusSError2 = str[4] == '1';
+            EpsonStatusSafeGuard2 = str[5] == '1';
+            EpsonStatusEStop2 = str[6] == '1';
+            EpsonStatusError2 = str[7] == '1';
+            EpsonStatusPaused2 = str[8] == '1';
+            EpsonStatusRunning2 = str[9] == '1';
+            EpsonStatusReady2 = str[10] == '1';
         }
         #endregion
 
@@ -520,7 +738,8 @@ namespace JasperUI
 
         private void SaveParameterButtonClick(object sender, RoutedEventArgs e)
         {
-
+            Inifile.INIWriteValue(iniParameterPath, "System", "MachineID", MachineID.Text);
+            Inifile.INIWriteValue(iniParameterPath, "System", "MachineID2", MachineID2.Text);
         }
 
         private void MsgTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -638,13 +857,101 @@ namespace JasperUI
             }
         }
 
+        private async void EpsonStartButton2Click(object sender, RoutedEventArgs e)
+        {
+            if (epsonRC90_2.CtrlStatus && EpsonStatusReady2 && !EpsonStatusEStop2)
+            {
+                await epsonRC90_2.CtrlNet.SendAsync("$start,0");
+            }
+        }
+
+        private async void EpsonPauseButton2Click(object sender, RoutedEventArgs e)
+        {
+            if (epsonRC90_2.CtrlStatus)
+            {
+                await epsonRC90_2.CtrlNet.SendAsync("$pause");
+            }
+        }
+
+        private async void EpsonContinueButton2Click(object sender, RoutedEventArgs e)
+        {
+            if (epsonRC90_2.CtrlStatus)
+            {
+                await epsonRC90_2.CtrlNet.SendAsync("$continue");
+            }
+        }
+
+        private void GrapImage_Click2(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                GlobalVars.GetImage2();
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
+        }
+
+        private void GrapButton_Click2(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                GlobalVars.GetBarcode2();
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
+        }
+
+        private void DrawRec1_Click2(object sender, RoutedEventArgs e)
+        {
+            HTuple row1, column1, row2, column2;
+            GlobalVars.viewController2.viewPort.HalconWindow.SetColor("red");
+            HOperatorSet.DrawRectangle1(GlobalVars.viewController2.viewPort.HalconWindow, out row1, out column1, out row2, out column2);
+            HObject rectangle;
+            HOperatorSet.GenRectangle1(out rectangle, row1, column1, row2, column2);
+            GlobalVars.viewController2.addIconicVar(rectangle);
+            GlobalVars.viewController2.repaint();
+            rectangle.WriteObject(System.Environment.CurrentDirectory + "\\rectangle3.hobj");
+        }
+
+        private void DrawRec2_Click2(object sender, RoutedEventArgs e)
+        {
+            HTuple row1, column1, row2, column2;
+            GlobalVars.viewController2.viewPort.HalconWindow.SetColor("red");
+            HOperatorSet.DrawRectangle1(GlobalVars.viewController2.viewPort.HalconWindow, out row1, out column1, out row2, out column2);
+            HObject rectangle;
+            HOperatorSet.GenRectangle1(out rectangle, row1, column1, row2, column2);
+            GlobalVars.viewController2.addIconicVar(rectangle);
+            GlobalVars.viewController2.repaint();
+            rectangle.WriteObject(System.Environment.CurrentDirectory + "\\rectangle4.hobj");
+        }
+
+        private async void EpsonReStartButton2Click(object sender, RoutedEventArgs e)
+        {
+            bool r = MessageBox.Show("确定重启机械手?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            if (epsonRC90_2.CtrlStatus && r)
+            {
+                await epsonRC90_2.CtrlNet.SendAsync("$stop");
+                await Task.Delay(300);
+                await epsonRC90_2.CtrlNet.SendAsync("$SetMotorOff,1");
+                await Task.Delay(400);
+                await epsonRC90_2.CtrlNet.SendAsync("$reset");
+            }
+        }
+
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            
+
+
             await Task.Delay(1);
             CameraPage.Visibility = Visibility.Visible;
             LoadedCallback();
             CameraPage.Visibility = Visibility.Collapsed;
+
+
         }
     }
 }
