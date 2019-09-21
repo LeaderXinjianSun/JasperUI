@@ -67,7 +67,7 @@ namespace JasperUI
             InitializeComponent();
 
             System.Diagnostics.Process[] myProcesses = System.Diagnostics.Process.GetProcessesByName("JasperUI");//获取指定的进程名   
-            if (myProcesses.Length >= 1) //如果可以获取到知道的进程名则说明已经启动
+            if (myProcesses.Length > 1) //如果可以获取到知道的进程名则说明已经启动
             {
                 System.Windows.MessageBox.Show("不允许重复打开软件");
                 System.Windows.Application.Current.Shutdown();
@@ -219,7 +219,7 @@ namespace JasperUI
                             }
                             if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
                             {
-                                if (GlobalVars.Camera.OpenCamera("CAM2", "GigEVision"))
+                                if (GlobalVars.Camera2.OpenCamera("CAM2", "GigEVision"))
                                 {
                                     try
                                     {
@@ -228,6 +228,7 @@ namespace JasperUI
                                         {
                                             AddMessage("更新系统时间" + oraDB.OraclDateTime());
                                             MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                            MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
                                             string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
                                             GlobalVars.Scan1 = new Scan();
                                             GlobalVars.Scan1.ini(COM);

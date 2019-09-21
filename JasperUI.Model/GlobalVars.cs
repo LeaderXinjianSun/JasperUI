@@ -114,7 +114,7 @@ namespace JasperUI.Model
         public static void GetImage2()
         {
             Camera2.GrabImageVoid();
-            viewController2.addIconicVar(GlobalVars.Camera.CurrentImage);
+            viewController2.addIconicVar(GlobalVars.Camera2.CurrentImage);
             viewController2.repaint();
         }
         private static int[] GetCorinWindow(HWindow window, HObject image, int r, int c)
