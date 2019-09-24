@@ -233,6 +233,9 @@ namespace JasperUI
                                             string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
                                             GlobalVars.Scan1 = new Scan();
                                             GlobalVars.Scan1.ini(COM);
+                                            COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan2", "COM0");
+                                            GlobalVars.Scan2 = new Scan();
+                                            GlobalVars.Scan2.ini(COM);
                                             Async.RunFuncAsync(ls.Run, null);//刷IO卡
                                             string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
                                             int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
@@ -484,7 +487,7 @@ namespace JasperUI
         {
             
             Stopwatch sw = new Stopwatch();
-            bool m2000 = false,m2004 = false;
+            bool m2000 = false,m2004 = false, m2001 = false, m2005 = false;
             bool[] M2000;
             bool first = true;
             while (true)
@@ -512,7 +515,10 @@ namespace JasperUI
                             first = false;
                             m2000 = M2000[0];
                             m2004 = M2000[4];
+                            m2001 = M2000[1];
+                            m2005 = M2000[5];
                         }
+                        #region 工位1
                         if (m2000 != M2000[0])
                         {
                             m2000 = M2000[0];
@@ -578,7 +584,7 @@ namespace JasperUI
                                             GlobalVars.Fx5u.SetM("M2501", true);
                                         }
                                         mysql.DisConnect();
-                                        
+
                                     }
                                     else
                                     {
@@ -601,6 +607,97 @@ namespace JasperUI
                                 }
                             }
                         }
+                        #endregion
+                        #region 工位2
+                        if (m2001 != M2000[1])
+                        {
+                            m2001 = M2000[1];
+                            if (m2001)
+                            {
+                                GlobalVars.Fx5u.SetM("M2001", false);
+                                GlobalVars.Fx5u.SetM("M2502", false);
+                                GlobalVars.Fx5u.SetM("M2503", false);
+                                GlobalVars.Fx5u.SetM("M2512", false);
+                                GlobalVars.Fx5u.SetM("M2513", false);
+                                GlobalVars.Scan2.GetBarCode((string barcode) =>
+                                {
+                                    AddMessage("测试机2轨道扫码:" + barcode);
+                                    if (barcode != "Error")
+                                    {
+                                        Mysql mysql = new Mysql();
+                                        if (mysql.Connect())
+                                        {
+                                            string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
+                                            DataSet ds = mysql.Select(stm);
+                                            DataTable dt = ds.Tables["table0"];
+                                            if (dt.Rows.Count > 0)
+                                            {
+                                                if (dt.Rows[0]["STATUS"] == DBNull.Value)
+                                                {
+                                                    stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                    mysql.executeQuery(stm);
+                                                    epsonRC90.BordBarcode = barcode;
+                                                    AddMessage("板 " + barcode + " 绑定");
+                                                    GlobalVars.Fx5u.SetM("M2513", true);
+                                                }
+                                                else
+                                                {
+                                                    if ((string)dt.Rows[0]["STATUS"] == "OFF")
+                                                    {
+                                                        stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                        mysql.executeQuery(stm);
+                                                        epsonRC90.BordBarcode = barcode;
+                                                        AddMessage("板 " + barcode + " 绑定");
+                                                        GlobalVars.Fx5u.SetM("M2513", true);
+                                                    }
+                                                    else
+                                                    {
+                                                        AddMessage("板 " + barcode + " 已测过");
+                                                        GlobalVars.Fx5u.SetM("M2512", true);
+                                                    }
+                                                }
+
+                                            }
+                                            else
+                                            {
+                                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
+                                                mysql.executeQuery(stm);
+                                                epsonRC90.BordBarcode = barcode;
+                                                AddMessage("板 " + barcode + " 绑定");
+                                                GlobalVars.Fx5u.SetM("M2513", true);
+                                            }
+                                            GlobalVars.Fx5u.SetM("M2502", true);
+                                        }
+                                        else
+                                        {
+                                            AddMessage("Mysql数据库查询失败");
+                                            GlobalVars.Fx5u.SetM("M2503", true);
+                                        }
+                                        mysql.DisConnect();
+
+                                    }
+                                    else
+                                    {
+                                        GlobalVars.Fx5u.SetM("M2503", true);
+                                    }
+                                });
+                            }
+                        }
+                        if (m2005 != M2000[5])
+                        {
+                            m2005 = M2000[5];
+                            if (m2005)
+                            {
+                                AddMessage("测试机2发送:RobotCanGet");
+                                GlobalVars.Fx5u.SetM("M2005", false);
+                                if (epsonRC90_2.TestSendStatus)
+                                {
+                                    await epsonRC90_2.TestSentNet.SendAsync("RobotCanGet");
+
+                                }
+                            }
+                        }
+                        #endregion
                     }
                 }
                 catch
