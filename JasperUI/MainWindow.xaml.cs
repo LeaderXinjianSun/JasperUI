@@ -22,6 +22,7 @@ using BingLibrary.HVision;
 using HalconDotNet;
 using System.Diagnostics;
 using System.Data;
+using System.Windows.Forms;
 
 namespace JasperUI
 {
@@ -779,7 +780,7 @@ namespace JasperUI
 
         private async void EpsonReStartButtonClick(object sender, RoutedEventArgs e)
         {
-            bool r = MessageBox.Show("确定重启机械手?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            bool r = System.Windows.MessageBox.Show("确定重启机械手?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
             if (epsonRC90.CtrlStatus && r)
             {
                 await epsonRC90.CtrlNet.SendAsync("$stop");
@@ -906,6 +907,58 @@ namespace JasperUI
             }
         }
 
+        private void ReadImage_Click2(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Image文件(*.bmp;*.jpg)|*.bmp;*.jpg|所有文件|*.*";
+            ofd.ValidateNames = true;
+            ofd.CheckPathExists = true;
+            ofd.CheckFileExists = true;
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string strFileName = ofd.FileName;
+                GlobalVars.Camera2.ReadImage(strFileName);
+                GlobalVars.viewController2.addIconicVar(GlobalVars.Camera2.CurrentImage);
+                GlobalVars.viewController2.repaint();
+            }
+        }
+
+        private void ReadImage_Click1(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Image文件(*.bmp;*.jpg)|*.bmp;*.jpg|所有文件|*.*";
+            ofd.ValidateNames = true;
+            ofd.CheckPathExists = true;
+            ofd.CheckFileExists = true;
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string strFileName = ofd.FileName;
+                GlobalVars.Camera.ReadImage(strFileName);
+                GlobalVars.viewController1.addIconicVar(GlobalVars.Camera.CurrentImage);
+                GlobalVars.viewController1.repaint();
+            }
+        }
+
+        private void SaveImage_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveDlg = new SaveFileDialog();
+            saveDlg.Filter = "图片(*.bmp)|*.bmp";
+            if (saveDlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                GlobalVars.Camera.SaveImage("bmp",saveDlg.FileName);
+            }
+        }
+
+        private void SaveImage_Click2(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveDlg = new SaveFileDialog();
+            saveDlg.Filter = "图片(*.bmp)|*.bmp";
+            if (saveDlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                GlobalVars.Camera2.SaveImage("bmp", saveDlg.FileName);
+            }
+        }
+
         private void DrawRec1_Click2(object sender, RoutedEventArgs e)
         {
             HTuple row1, column1, row2, column2;
@@ -932,7 +985,7 @@ namespace JasperUI
 
         private async void EpsonReStartButton2Click(object sender, RoutedEventArgs e)
         {
-            bool r = MessageBox.Show("确定重启机械手?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            bool r = System.Windows.MessageBox.Show("确定重启机械手?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
             if (epsonRC90_2.CtrlStatus && r)
             {
                 await epsonRC90_2.CtrlNet.SendAsync("$stop");

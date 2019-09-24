@@ -82,12 +82,12 @@ namespace JasperUI.Model
             HObject symbolXLD1, symbolXLD2;
             HOperatorSet.ReadObject(out Roi1, System.Environment.CurrentDirectory + "\\rectangle3.hobj");
             HOperatorSet.ReadObject(out Roi2, System.Environment.CurrentDirectory + "\\rectangle4.hobj");
-            HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi1, out image1);
-            HOperatorSet.ReduceDomain(Camera.CurrentImage, Roi2, out image2);
+            HOperatorSet.ReduceDomain(Camera2.CurrentImage, Roi1, out image1);
+            HOperatorSet.ReduceDomain(Camera2.CurrentImage, Roi2, out image2);
             HOperatorSet.FindDataCode2d(new HImage(image1), out symbolXLD1, DataCodeHandle2, new HTuple(), new HTuple(), out ResultHandles2, out DecodedDataStrings2);
-            res[0] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+            res[0] = new HTuple((new HTuple(DecodedDataStrings2.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings2.TupleSelect(0).ToString().Replace("\"", "") : "error";
             HOperatorSet.FindDataCode2d(new HImage(image2), out symbolXLD2, DataCodeHandle2, new HTuple(), new HTuple(), out ResultHandles2, out DecodedDataStrings2);
-            res[1] = new HTuple((new HTuple(DecodedDataStrings.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings.TupleSelect(0).ToString().Replace("\"", "") : "error";
+            res[1] = new HTuple((new HTuple(DecodedDataStrings2.TupleLength())).TupleEqual(1)) == 1 ? DecodedDataStrings2.TupleSelect(0).ToString().Replace("\"", "") : "error";
 
             viewController2.addIconicVar(symbolXLD1);
             viewController2.addIconicVar(symbolXLD2);
@@ -99,10 +99,10 @@ namespace JasperUI.Model
             HTuple area, rows, columns;
 
             HOperatorSet.AreaCenter(Roi1, out area, out rows, out columns);
-            int[] co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            int[] co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera2.CurrentImage, (int)rows.D, (int)columns.D);
             HOperatorSet.DispText(viewController2.viewPort.HalconWindow, "① " + res[0], "window", co[0], co[1], "black", "box", "true");
             HOperatorSet.AreaCenter(Roi2, out area, out rows, out columns);
-            co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera.CurrentImage, (int)rows.D, (int)columns.D);
+            co = GetCorinWindow(viewController2.viewPort.HalconWindow, Camera2.CurrentImage, (int)rows.D, (int)columns.D);
             HOperatorSet.DispText(viewController2.viewPort.HalconWindow, "② " + res[1], "window", co[0], co[1], "black", "box", "true");
 
             image1.Dispose();

@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20190921" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20190924" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -209,7 +209,9 @@
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="1" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <Button Width="100" Height="30" Margin="10,0" Content="拍照" Click="GrapImage_Click"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="拍照" Click="GrapImage_Click"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="读取" Click="ReadImage_Click1"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="保存" Click="SaveImage_Click"></Button>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Row="2" VerticalAlignment="Center">
@@ -240,7 +242,9 @@
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="1" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <Button Width="100" Height="30" Margin="10,0" Content="拍照" Click="GrapImage_Click2"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="拍照" Click="GrapImage_Click2"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="读取" Click="ReadImage_Click2"></Button>
+                                <Button Width="80" Height="30" Margin="10,0" Content="保存" Click="SaveImage_Click2"></Button>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Row="2" VerticalAlignment="Center">
