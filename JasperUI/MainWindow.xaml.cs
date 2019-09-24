@@ -636,7 +636,7 @@ namespace JasperUI
                                                 {
                                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
                                                     mysql.executeQuery(stm);
-                                                    epsonRC90.BordBarcode = barcode;
+                                                    epsonRC90_2.BordBarcode = barcode;
                                                     AddMessage("板 " + barcode + " 绑定");
                                                     GlobalVars.Fx5u.SetM("M2513", true);
                                                 }
@@ -646,7 +646,7 @@ namespace JasperUI
                                                     {
                                                         stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
                                                         mysql.executeQuery(stm);
-                                                        epsonRC90.BordBarcode = barcode;
+                                                        epsonRC90_2.BordBarcode = barcode;
                                                         AddMessage("板 " + barcode + " 绑定");
                                                         GlobalVars.Fx5u.SetM("M2513", true);
                                                     }
@@ -662,7 +662,7 @@ namespace JasperUI
                                             {
                                                 stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','ON')";
                                                 mysql.executeQuery(stm);
-                                                epsonRC90.BordBarcode = barcode;
+                                                epsonRC90_2.BordBarcode = barcode;
                                                 AddMessage("板 " + barcode + " 绑定");
                                                 GlobalVars.Fx5u.SetM("M2513", true);
                                             }
