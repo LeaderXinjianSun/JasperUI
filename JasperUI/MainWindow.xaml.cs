@@ -62,6 +62,9 @@ namespace JasperUI
         Leisai ls;
         List<int[]> ExIoIn, ExIoOut, ExIoIn2, ExIoOut2;
         long SWms = 0;
+        DateTime lastSam1, lastSam2;
+        DateTime SamStartDatetime, SamDateBigin;
+        bool IsInSampleMode1 = false, IsInSampleMode2 = false;
         #endregion
         public MainWindow()
         {
@@ -228,6 +231,17 @@ namespace JasperUI
                                         if (oraDB.isConnect())
                                         {
                                             AddMessage("更新系统时间" + oraDB.OraclDateTime());
+                                            SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
+                                            SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
+                                            SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
+                                            SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
+                                            IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+
+                                            lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
+                                            LastSam1.Text = lastSam1.ToString();
+                                            lastSam2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam2", "2019/1/1 00:00:00"));
+                                            LastSam2.Text = lastSam2.ToString();
+
                                             MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
                                             MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
                                             string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
@@ -501,6 +515,76 @@ namespace JasperUI
                 RobotState = epsonRC90.CtrlStatus && epsonRC90.IOReceiveStatus && epsonRC90.TestReceiveStatus && epsonRC90.TestSendStatus;
                 RobotState2 = epsonRC90_2.CtrlStatus && epsonRC90_2.IOReceiveStatus && epsonRC90_2.TestReceiveStatus && epsonRC90_2.TestSendStatus;
                 UpdateUI();
+                #endregion
+                #region 样本
+                if (DateTime.Now.Hour >= 6 && DateTime.Now.Hour < 12)
+                {
+                    //上午
+                    SamStartDatetime = Convert.ToDateTime("08:00:00");
+                    SamDateBigin = Convert.ToDateTime("06:00:00");
+                }
+                else
+                {
+                    if (DateTime.Now.Hour >= 12 && DateTime.Now.Hour < 18)
+                    {
+                        //下午
+                        SamStartDatetime = Convert.ToDateTime("14:00:00");
+                        SamDateBigin = Convert.ToDateTime("12:00:00");
+                    }
+                    else
+                    {
+                        if (DateTime.Now.Hour >= 18)
+                        {
+                            //前夜
+                            SamStartDatetime = Convert.ToDateTime("20:00:00");
+                            SamDateBigin = Convert.ToDateTime("18:00:00");
+                        }
+                        else
+                        {
+                            //后夜
+                            SamStartDatetime = Convert.ToDateTime("02:00:00");
+                            SamDateBigin = Convert.ToDateTime("00:00:00");
+                        }
+                    }
+                }
+                SampleGrid1.Visibility = (DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam1).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
+                if ((DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam1).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                {
+                    if (IsInSampleMode1)
+                    {
+                        SampleTextBlock1.Text = "样本测试中";
+                    }
+                    else
+                    {
+                        if ((DateTime.Now - SamStartDatetime).TotalSeconds < 0)
+                        {
+                            SampleTextBlock1.Text = "请测样本";
+                        }
+                        else
+                        {
+                            SampleTextBlock1.Text = "强制样本";
+                        }
+                    }
+                }
+                SampleGrid2.Visibility = (DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam2).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
+                if ((DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam2).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                {
+                    if (IsInSampleMode2)
+                    {
+                        SampleTextBlock2.Text = "样本测试中";
+                    }
+                    else
+                    {
+                        if ((DateTime.Now - SamStartDatetime).TotalSeconds < 0)
+                        {
+                            SampleTextBlock2.Text = "请测样本";
+                        }
+                        else
+                        {
+                            SampleTextBlock2.Text = "强制样本";
+                        }
+                    }
+                }
                 #endregion
                 #region work
                 try
@@ -788,6 +872,26 @@ namespace JasperUI
         private void ModelPrintEventProcess(string str)
         {
             AddMessage(str);
+            if (str.Contains("EndSample"))
+            {
+                if (str.Contains("第1台"))
+                {
+                    lastSam1 = DateTime.Now;
+                    Inifile.INIWriteValue(iniParameterPath, "Sample", "LastSam1", lastSam1.ToString());
+                    this.Dispatcher.Invoke(new Action(() => {
+                        LastSam1.Text = lastSam1.ToString();
+                    }));                    
+                }
+                if (str.Contains("第2台"))
+                {
+                    lastSam2 = DateTime.Now;
+                    Inifile.INIWriteValue(iniParameterPath, "Sample", "LastSam2", lastSam2.ToString());
+                    this.Dispatcher.Invoke(new Action(() => {
+                        LastSam2.Text = lastSam2.ToString();
+                    }));
+                    
+                }
+            }
         }
         private void EpsonStatusUpdateProcess(string str)
         {
@@ -1053,6 +1157,32 @@ namespace JasperUI
             if (saveDlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 GlobalVars.Camera2.SaveImage("bmp", saveDlg.FileName);
+            }
+        }
+
+        private void SaveSamItem(object sender, RoutedEventArgs e)
+        {
+            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem1", SamItem1.Text);
+            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem2", SamItem2.Text);
+            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem3", SamItem3.Text);
+            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem4", SamItem4.Text);
+        }
+
+        private async void StartSamClick(object sender, RoutedEventArgs e)
+        {
+            bool r = System.Windows.MessageBox.Show("确定开始样本测试?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            if (r)
+            {
+                if (epsonRC90.TestSendStatus)
+                {
+                    await epsonRC90.TestSentNet.SendAsync("StartSample");
+                    AddMessage("Robote1 StartSample");
+                }
+                if (epsonRC90_2.TestSendStatus)
+                {
+                    await epsonRC90_2.TestSentNet.SendAsync("StartSample");
+                    AddMessage("Robote2 StartSample");
+                }
             }
         }
 

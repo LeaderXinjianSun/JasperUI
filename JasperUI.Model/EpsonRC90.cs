@@ -33,6 +33,7 @@ namespace JasperUI.Model
         public int BordSW = 0;
         //条码 板条码 索引 产品状态 日期 时间
         public ProducInfo[] BarInfo = new ProducInfo[96];
+        string[] SamBarcode = new string[8];
         public string BordBarcode = "Null";
         public string Name;
         #endregion
@@ -356,6 +357,34 @@ namespace JasperUI.Model
                                     }
                                     
                                     break;
+                                case "ScanBarcodeSample":
+                                    Barcodes = new string[2];
+                                    switch (Name)
+                                    {
+                                        case "第1台":
+                                            GlobalVars.GetImage();
+                                            Barcodes = GlobalVars.GetBarcode();
+                                            break;
+                                        case "第2台":
+                                            GlobalVars.GetImage2();
+                                            Barcodes = GlobalVars.GetBarcode2();
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    int index1 = int.Parse(strs[2]);
+                                    SamBarcode[index1] = Barcodes[0] == "error" ? "FAIL" : Barcodes[0];
+                                    SamBarcode[index1 + 4] = Barcodes[1] == "error" ? "FAIL" : Barcodes[1];
+                                    await TestSentNet.SendAsync("BarcodeInfo2;OK");
+                                    ModelPrint(Name + "BarcodeInfo2;OK");
+                                    break;
+                                case "TestStartSample":
+                                    SendSamBarcode();
+                                    break;
+                                case "CheckSample":
+                                    await TestSentNet.SendAsync("EndSample");
+                                    ModelPrint(Name + "EndSample");
+                                    break;
                                 default:
                                     ModelPrint(Name + "无效指令： " + s);
                                     break;
@@ -628,6 +657,17 @@ namespace JasperUI.Model
                 str += BarInfo[i + index * 8].Barcode + "|";
             }
             str += "0";
+            ModelPrint(Name + str);
+            bool r = await udp.SendAsync(str);
+        }
+        async void SendSamBarcode()
+        {
+            string str = "";
+            for (int i = 0; i < 8; i++)
+            {
+                str += SamBarcode[i] + "|";
+            }
+            str += "3";
             ModelPrint(Name + str);
             bool r = await udp.SendAsync(str);
         }

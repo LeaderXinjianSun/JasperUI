@@ -39,6 +39,37 @@
                 <Grid.Background>
                     <ImageBrush ImageSource="15621426903718.png" Stretch="UniformToFill"></ImageBrush>
                 </Grid.Background>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition Width="10"></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid Name="SampleGrid1" Background="GreenYellow">
+                        <TextBlock Name="SampleTextBlock1" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="26"></TextBlock>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid Name="SampleGrid2" Background="GreenYellow">
+                        <TextBlock Name="SampleTextBlock2" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="26"></TextBlock>
+                    </Grid>
+                </Grid>
             </Grid>
             <TextBox Grid.Row="1" VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" Margin="1" x:Name="MsgTextBox" IsReadOnly="True" TextChanged="MsgTextBox_TextChanged"  FontSize="14" Background="Black" FontFamily="宋体" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"></TextBox>
             <Grid Grid.Column="1" Grid.RowSpan="2">
@@ -177,6 +208,46 @@
                         <Button Width="60" Margin="20,0,10,0" Content="保存" Click="SaveParameterButtonClick"></Button>
                     </StackPanel>
                 </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Column="1" Header="样本">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="项目1 "></TextBlock>
+                            <TextBox Name="SamItem1" Width="150"></TextBox>
+                            <Button Margin="5,0" Width="60" Content="保存" Click="SaveSamItem"></Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="项目2 "></TextBlock>
+                            <TextBox Name="SamItem2" Width="150"></TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="项目3 "></TextBlock>
+                            <TextBox Name="SamItem3" Width="150"></TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="项目4 "></TextBlock>
+                            <TextBox Name="SamItem4" Width="150"></TextBox>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10">
+                        <CheckBox Name="IsSam" Content="样本"></CheckBox>
+                        <Button Width="60" Height="60" Margin="0,50,0,50" Content="开始" Click="StartSamClick"></Button>
+                        <TextBlock Text="上一次测样本时刻"></TextBlock>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="测试机1: "></TextBlock>
+                            <TextBlock Name="LastSam1"></TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="测试机2: "></TextBlock>
+                            <TextBlock Name="LastSam2"></TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
             </GroupBox>
             <GroupBox Grid.Row="1" Header="机台参数">
                 <StackPanel>
