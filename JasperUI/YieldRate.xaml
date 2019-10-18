@@ -1,0 +1,20 @@
+﻿<UserControl x:Class="JasperUI.YieldRate"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:JasperUI"
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="80">
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBlock Name="PassCountTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20"></TextBlock>
+        <Grid Name="YieldGrid" Grid.Row="1">
+            <TextBlock Name="YieldTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20"></TextBlock>
+        </Grid>
+        
+    </Grid>
+</UserControl>

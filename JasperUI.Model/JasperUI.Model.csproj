@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="Async.cs" />
     <Compile Include="CameraOperate.cs" />
+    <Compile Include="Csvfile.cs" />
     <Compile Include="DateTimeUtility.cs" />
     <Compile Include="EpsonRC90.cs" />
     <Compile Include="Fx5u.cs" />

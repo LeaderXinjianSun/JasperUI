@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20190924" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20191018" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -37,7 +37,7 @@
             </Grid.ColumnDefinitions>
             <Grid>
                 <Grid.Background>
-                    <ImageBrush ImageSource="15621426903718.png" Stretch="UniformToFill"></ImageBrush>
+                    <ImageBrush ImageSource="捕获.PNG" Stretch="UniformToFill"></ImageBrush>
                 </Grid.Background>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
@@ -56,6 +56,46 @@
                     <Grid Name="SampleGrid1" Background="GreenYellow">
                         <TextBlock Name="SampleTextBlock1" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="26"></TextBlock>
                     </Grid>
+                    <Grid Grid.Row="1" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <local:Tester x:Name="Result1_8"></local:Tester>
+                        <local:Tester x:Name="Result1_7" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_6" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_5" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_4" Grid.Row="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                    </Grid>
+                    <Grid Grid.Row="3" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <local:YieldRate x:Name="Yield1_8" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_7" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_6" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_5" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_4" Grid.Row="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                    </Grid>
                 </Grid>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
@@ -69,7 +109,48 @@
                     <Grid Name="SampleGrid2" Background="GreenYellow">
                         <TextBlock Name="SampleTextBlock2" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="26"></TextBlock>
                     </Grid>
+                    <Grid Grid.Row="1" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <local:Tester x:Name="Result2_8"></local:Tester>
+                        <local:Tester x:Name="Result2_7" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_6" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_5" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_4" Grid.Row="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                    </Grid>
+                    <Grid Grid.Row="3" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <local:YieldRate x:Name="Yield2_8" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_7" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_6" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_5" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_4" Grid.Row="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                    </Grid>
                 </Grid>
+                
             </Grid>
             <TextBox Grid.Row="1" VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" Margin="1" x:Name="MsgTextBox" IsReadOnly="True" TextChanged="MsgTextBox_TextChanged"  FontSize="14" Background="Black" FontFamily="宋体" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"></TextBox>
             <Grid Grid.Column="1" Grid.RowSpan="2">
@@ -207,6 +288,18 @@
                         <TextBox Name="MachineID" Width="200" VerticalAlignment="Center"></TextBox>
                         <Button Width="60" Margin="20,0,10,0" Content="保存" Click="SaveParameterButtonClick"></Button>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="上一次测样本时刻"></TextBlock>
+                        <TextBlock Name="LastSam1"></TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="下一次测样本时刻"></TextBlock>
+                        <TextBlock Name="NextSam1"></TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="样本倒计时"></TextBlock>
+                        <TextBlock Name="SpanSam1" Foreground="Purple" FontSize="20"></TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </GroupBox>
             <GroupBox Grid.Column="1" Header="样本">
@@ -236,16 +329,8 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10">
                         <CheckBox Name="IsSam" Content="样本"></CheckBox>
-                        <Button Width="60" Height="60" Margin="0,50,0,50" Content="开始" Click="StartSamClick"></Button>
-                        <TextBlock Text="上一次测样本时刻"></TextBlock>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="测试机1: "></TextBlock>
-                            <TextBlock Name="LastSam1"></TextBlock>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="测试机2: "></TextBlock>
-                            <TextBlock Name="LastSam2"></TextBlock>
-                        </StackPanel>
+                        <Button Width="60" Height="60" Margin="0,50,0,0" Content="开始1" Click="StartSamClick"></Button>
+                        <Button Width="60" Height="60" Margin="0,10,0,0" Content="开始2" Click="StartSamClick2"></Button>
                     </StackPanel>
                 </Grid>
             </GroupBox>
@@ -255,6 +340,18 @@
                         <TextBlock Text=" 机台编号 " VerticalAlignment="Center"></TextBlock>
                         <TextBox Name="MachineID2" Width="200" VerticalAlignment="Center"></TextBox>
                         <Button Width="60" Margin="20,0,10,0" Content="保存" Click="SaveParameterButtonClick"></Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="上一次测样本时刻"></TextBlock>
+                        <TextBlock Name="LastSam2"></TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="下一次测样本时刻"></TextBlock>
+                        <TextBlock Name="NextSam2"></TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="样本倒计时"></TextBlock>
+                        <TextBlock Name="SpanSam2" Foreground="Purple" FontSize="20"></TextBlock>
                     </StackPanel>
                 </StackPanel>
             </GroupBox>

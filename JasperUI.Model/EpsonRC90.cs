@@ -10,6 +10,9 @@ using BingLibrary.Net.net;
 using System.Data;
 using ViewROI;
 using BingLibrary.HVision;
+using BingLibrary.hjb;
+using System.IO;
+using System.Diagnostics;
 
 namespace JasperUI.Model
 {
@@ -36,6 +39,7 @@ namespace JasperUI.Model
         string[] SamBarcode = new string[8];
         public string BordBarcode = "Null";
         public string Name;
+        public JasperTester jasperTester = new JasperTester();
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -58,6 +62,29 @@ namespace JasperUI.Model
                 BarInfo[i].Status = 0;
                 BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
                 BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                //Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester1TestCount" + (i + 1).ToString(), "0");
+                try
+                {
+                    switch (Name)
+                    {
+                        case "第1台":
+                            jasperTester.TestCount[i] = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "Summary", "Tester1TestCount" + (i + 1).ToString(), "0"));
+                            jasperTester.PassCount[i] = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "Summary", "Tester1PassCount" + (i + 1).ToString(), "0"));
+                            break;
+                        case "第2台":
+                            jasperTester.TestCount[i] = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "Summary", "Tester2TestCount" + (i + 1).ToString(), "0"));
+                            jasperTester.PassCount[i] = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "Summary", "Tester2PassCount" + (i + 1).ToString(), "0"));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch
+                { }
+
             }
             Async.RunFuncAsync(Run, null);
         }
@@ -382,8 +409,9 @@ namespace JasperUI.Model
                                     SendSamBarcode();
                                     break;
                                 case "CheckSample":
-                                    await TestSentNet.SendAsync("EndSample");
-                                    ModelPrint(Name + "EndSample");
+                                    CheckSam();
+                                    break;
+                                case "AskSample":
                                     break;
                                 default:
                                     ModelPrint(Name + "无效指令： " + s);
@@ -659,6 +687,10 @@ namespace JasperUI.Model
             str += "0";
             ModelPrint(Name + str);
             bool r = await udp.SendAsync(str);
+            for (int i = 0; i < 8; i++)
+            {
+                jasperTester.Result[i] = "N";
+            }
         }
         async void SendSamBarcode()
         {
@@ -673,8 +705,10 @@ namespace JasperUI.Model
         }
         async void SaveResult(string[] rststr)
         {
-            await Task.Run(()=> {
-                int index = int.Parse(rststr[1]);
+            int index = int.Parse(rststr[1]);
+            await Task.Run(() =>
+            {
+                
                 Mysql mysql = new Mysql();
                 if (mysql.Connect())
                 {
@@ -684,12 +718,163 @@ namespace JasperUI.Model
                         + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "'";
                         mysql.executeQuery(stm);
                     }
-                    mysql.DisConnect();                   
+                    mysql.DisConnect();
                 }
 
             });
+            if (!Directory.Exists("D:\\生产记录\\" + Name + "\\" + DateTime.Now.ToString("yyyyMMdd")))
+            {
+                Directory.CreateDirectory("D:\\生产记录\\" + Name + "\\" + DateTime.Now.ToString("yyyyMMdd"));
+            }
+            string path = "D:\\生产记录\\" + Name + "\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMdd") + "生产记录.csv";
+            
+            for (int i = 0; i < 8; i++)
+            {
+                jasperTester.Result[i] = rststr[2 + i] == "4" ? "P" : "F";
+                if (rststr[2 + i] == "4" || rststr[2 + i] == "3")
+                {
+                    jasperTester.TestCount[i]++;
+                }
+                if (rststr[2 + i] == "4")
+                {
+                    jasperTester.PassCount[i]++;
+                }
+                if (jasperTester.TestCount[i] > 0)
+                {
+                    jasperTester.Yield[i] = (double)jasperTester.PassCount[i] / (double)jasperTester.TestCount[i];
+                }
+                else
+                {
+                    jasperTester.Yield[i] = 0;
+                }
+
+                switch (Name)
+                {
+                    case "第1台":
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester1TestCount" + (i + 1).ToString(), jasperTester.TestCount[i].ToString());
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester1PassCount" + (i + 1).ToString(), jasperTester.PassCount[i].ToString());
+                        break;
+                    case "第2台":
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester2TestCount" + (i + 1).ToString(), jasperTester.TestCount[i].ToString());
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester2PassCount" + (i + 1).ToString(), jasperTester.PassCount[i].ToString());
+                        break;
+                    default:
+                        break;
+                }
+                Csvfile.savetocsv(path, new string[] { DateTime.Now.ToString(), BarInfo[index * 8 + i].Barcode, rststr[2 + i] == "4" ? "P" : "F" });
+            }
 
         }
+        async void CheckSam()
+        {
+            string MachineID = "1";
+            switch (Name)
+            {
+                case "第1台":
+                    MachineID = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "1");
+                    break;
+                case "第2台":
+                    MachineID = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "1");
+                    break;
+                default:
+                    break;
+            }
+            
+            string[] NgItems = new string[4];
+            for (int i = 0; i < 4; i++)
+            {
+                NgItems[i] = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem" + (i + 1).ToString(), "OK");
+            }
+            await Task.Run(async() => {
+                Oracle oraDB = new Oracle("zdtdb", "ictdata", "ictdata*168");
+                string sqlstr = "select * from BARSAMREC where CDATE = '" + DateTime.Now.ToString("yyyyMMdd") +"' and CTIME > '" + DateTime.Now.AddHours(-2).ToString("HHmmss") + "' and SR01 in ('";
+                for (int i = 0; i < 8; i++)
+                {
+                    sqlstr += MachineID + "_" + (i + 1).ToString() + "'";
+                    if (i < 7)
+                    {
+                        sqlstr += ",'";
+                    }
+                    if (i == 7)
+                    {
+                        sqlstr += ") ";
+                    }
+                }                
+                DataSet ds = oraDB.executeQuery(sqlstr);
+                DataTable dt1 = ds.Tables[0];
+                string Columns = "";
+                for (int i = 0; i < dt1.Columns.Count - 1; i++)
+                {
+                    Columns += dt1.Columns[i].ColumnName + ",";
+                }
+                Columns += dt1.Columns[dt1.Columns.Count - 1].ColumnName;
+                if (!Directory.Exists("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd")))
+                {
+                    Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
+                }
+                Csvfile.dt2csv(dt1, "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv", "Sample", Columns);
+                try
+                {
+                    Process process1 = new Process();
+                    process1.StartInfo.FileName = "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv";
+                    process1.StartInfo.Arguments = "";
+                    process1.StartInfo.WindowStyle = ProcessWindowStyle.Maximized;
+                    process1.Start();
+                }
+                catch (Exception ex)
+                {
+                    ModelPrint(ex.Message);
+                }
+                int[][] Result = new int[4][];
+                Result[0] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                Result[1] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                Result[2] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                Result[3] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        DataRow[] dtr = dt1.Select(string.Format("NGITEM = '{0}' AND TRES = '{1}' AND SR01 = '{2}'", NgItems[i], NgItems[i], MachineID + "_" + (j + 1).ToString()));
+                        Result[i][j] = dtr.Length;
+                        if (dtr.Length == 0)
+                        {
+                            ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + NgItems[i] + " 样本未测到");
+                        }
+                    }
+                }
+                string rst = "";
+                bool success = true;
+                for (int i = 0; i < 4; i++)
+                {
+                    //rst += i.ToString() + ";";
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (Result[i][j] == 0)
+                        {
+                            success = false;
+                            rst += "0;";
+                        }
+                        else
+                        {
+                            rst += "1;";
+                        }
+                    }
+                }
+                string ResultStr;
+                if (success)
+                {
+                    ResultStr = "EndSample";
+                    await udp.SendAsync("testModel:0");
+                }
+                else
+                {
+                    ResultStr = "RestartSample;" + rst;
+                }
+                await TestSentNet.SendAsync(ResultStr);
+                ModelPrint(Name + ResultStr);
+            });
+        }
+
         #endregion
 
     }
@@ -701,5 +886,19 @@ namespace JasperUI.Model
         public int Status { set; get; }
         public string TDate { set; get; }
         public string TTime { set; get; }
+    }
+    public class JasperTester
+    {
+        public string[] Result { set; get; }
+        public int[] PassCount { set; get; }
+        public int[] TestCount { set; get; }
+        public Double[] Yield { set; get; }
+        public JasperTester()
+        {
+            Result = new string[8] { "N", "N", "N", "N", "N", "N", "N", "N", };
+            PassCount = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+            TestCount = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+            Yield = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+        }
     }
 }

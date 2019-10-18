@@ -63,8 +63,9 @@ namespace JasperUI
         List<int[]> ExIoIn, ExIoOut, ExIoIn2, ExIoOut2;
         long SWms = 0;
         DateTime lastSam1, lastSam2;
-        DateTime SamStartDatetime, SamDateBigin;
+        DateTime SamStartDatetime1, SamDateBigin1, SamStartDatetime2, SamDateBigin2;
         bool IsInSampleMode1 = false, IsInSampleMode2 = false;
+        string LastBanci = "";
         #endregion
         public MainWindow()
         {
@@ -231,6 +232,8 @@ namespace JasperUI
                                         if (oraDB.isConnect())
                                         {
                                             AddMessage("更新系统时间" + oraDB.OraclDateTime());
+                                            LastBanci = Inifile.INIGetStringValue(iniParameterPath, "Summary", "LastBanci", "null");
+
                                             SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
                                             SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
                                             SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
@@ -517,38 +520,11 @@ namespace JasperUI
                 UpdateUI();
                 #endregion
                 #region 样本
-                if (DateTime.Now.Hour >= 6 && DateTime.Now.Hour < 12)
-                {
-                    //上午
-                    SamStartDatetime = Convert.ToDateTime("08:00:00");
-                    SamDateBigin = Convert.ToDateTime("06:00:00");
-                }
-                else
-                {
-                    if (DateTime.Now.Hour >= 12 && DateTime.Now.Hour < 18)
-                    {
-                        //下午
-                        SamStartDatetime = Convert.ToDateTime("14:00:00");
-                        SamDateBigin = Convert.ToDateTime("12:00:00");
-                    }
-                    else
-                    {
-                        if (DateTime.Now.Hour >= 18)
-                        {
-                            //前夜
-                            SamStartDatetime = Convert.ToDateTime("20:00:00");
-                            SamDateBigin = Convert.ToDateTime("18:00:00");
-                        }
-                        else
-                        {
-                            //后夜
-                            SamStartDatetime = Convert.ToDateTime("02:00:00");
-                            SamDateBigin = Convert.ToDateTime("00:00:00");
-                        }
-                    }
-                }
-                SampleGrid1.Visibility = (DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam1).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
-                if ((DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam1).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                SamDateBigin1 = lastSam1.AddHours(4);
+                SamStartDatetime1 = lastSam1.AddHours(6);
+                SpanSam1.Text =(SamStartDatetime1 - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
+                SampleGrid1.Visibility = (DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
+                if ((DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value)
                 {
                     if (IsInSampleMode1)
                     {
@@ -556,7 +532,7 @@ namespace JasperUI
                     }
                     else
                     {
-                        if ((DateTime.Now - SamStartDatetime).TotalSeconds < 0)
+                        if ((DateTime.Now - SamStartDatetime1).TotalSeconds < 0)
                         {
                             SampleTextBlock1.Text = "请测样本";
                         }
@@ -566,8 +542,11 @@ namespace JasperUI
                         }
                     }
                 }
-                SampleGrid2.Visibility = (DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam2).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
-                if ((DateTime.Now - SamDateBigin).TotalSeconds > 0 && (SamDateBigin - lastSam2).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                SamDateBigin2 = lastSam2.AddHours(4);
+                SamStartDatetime2 = lastSam2.AddHours(6);
+                SpanSam2.Text = (SamStartDatetime2 - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
+                SampleGrid2.Visibility = (DateTime.Now - SamDateBigin2).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
+                if ((DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value)
                 {
                     if (IsInSampleMode2)
                     {
@@ -575,7 +554,7 @@ namespace JasperUI
                     }
                     else
                     {
-                        if ((DateTime.Now - SamStartDatetime).TotalSeconds < 0)
+                        if ((DateTime.Now - SamStartDatetime2).TotalSeconds < 0)
                         {
                             SampleTextBlock2.Text = "请测样本";
                         }
@@ -584,6 +563,80 @@ namespace JasperUI
                             SampleTextBlock2.Text = "强制样本";
                         }
                     }
+                }
+                #endregion
+                #region 良率
+                Result1_1.Result = epsonRC90.jasperTester.Result[0];
+                Result1_2.Result = epsonRC90.jasperTester.Result[1];
+                Result1_3.Result = epsonRC90.jasperTester.Result[2];
+                Result1_4.Result = epsonRC90.jasperTester.Result[3];
+                Result1_5.Result = epsonRC90.jasperTester.Result[4];
+                Result1_6.Result = epsonRC90.jasperTester.Result[5];
+                Result1_7.Result = epsonRC90.jasperTester.Result[6];
+                Result1_8.Result = epsonRC90.jasperTester.Result[7];
+
+                Result2_1.Result = epsonRC90_2.jasperTester.Result[0];
+                Result2_2.Result = epsonRC90_2.jasperTester.Result[1];
+                Result2_3.Result = epsonRC90_2.jasperTester.Result[2];
+                Result2_4.Result = epsonRC90_2.jasperTester.Result[3];
+                Result2_5.Result = epsonRC90_2.jasperTester.Result[4];
+                Result2_6.Result = epsonRC90_2.jasperTester.Result[5];
+                Result2_7.Result = epsonRC90_2.jasperTester.Result[6];
+                Result2_8.Result = epsonRC90_2.jasperTester.Result[7];
+
+                Yield1_1.PassCount = epsonRC90.jasperTester.PassCount[0];
+                Yield1_2.PassCount = epsonRC90.jasperTester.PassCount[1];
+                Yield1_3.PassCount = epsonRC90.jasperTester.PassCount[2];
+                Yield1_4.PassCount = epsonRC90.jasperTester.PassCount[3];
+                Yield1_5.PassCount = epsonRC90.jasperTester.PassCount[4];
+                Yield1_6.PassCount = epsonRC90.jasperTester.PassCount[5];
+                Yield1_7.PassCount = epsonRC90.jasperTester.PassCount[6];
+                Yield1_8.PassCount = epsonRC90.jasperTester.PassCount[7];
+
+                Yield2_1.PassCount = epsonRC90_2.jasperTester.PassCount[0];
+                Yield2_2.PassCount = epsonRC90_2.jasperTester.PassCount[1];
+                Yield2_3.PassCount = epsonRC90_2.jasperTester.PassCount[2];
+                Yield2_4.PassCount = epsonRC90_2.jasperTester.PassCount[3];
+                Yield2_5.PassCount = epsonRC90_2.jasperTester.PassCount[4];
+                Yield2_6.PassCount = epsonRC90_2.jasperTester.PassCount[5];
+                Yield2_7.PassCount = epsonRC90_2.jasperTester.PassCount[6];
+                Yield2_8.PassCount = epsonRC90_2.jasperTester.PassCount[7];
+
+                Yield1_1.Yield = epsonRC90.jasperTester.Yield[0];
+                Yield1_2.Yield = epsonRC90.jasperTester.Yield[1];
+                Yield1_3.Yield = epsonRC90.jasperTester.Yield[2];
+                Yield1_4.Yield = epsonRC90.jasperTester.Yield[3];
+                Yield1_5.Yield = epsonRC90.jasperTester.Yield[4];
+                Yield1_6.Yield = epsonRC90.jasperTester.Yield[5];
+                Yield1_7.Yield = epsonRC90.jasperTester.Yield[6];
+                Yield1_8.Yield = epsonRC90.jasperTester.Yield[7];
+
+                Yield2_1.Yield = epsonRC90_2.jasperTester.Yield[0];
+                Yield2_2.Yield = epsonRC90_2.jasperTester.Yield[1];
+                Yield2_3.Yield = epsonRC90_2.jasperTester.Yield[2];
+                Yield2_4.Yield = epsonRC90_2.jasperTester.Yield[3];
+                Yield2_5.Yield = epsonRC90_2.jasperTester.Yield[4];
+                Yield2_6.Yield = epsonRC90_2.jasperTester.Yield[5];
+                Yield2_7.Yield = epsonRC90_2.jasperTester.Yield[6];
+                Yield2_8.Yield = epsonRC90_2.jasperTester.Yield[7];
+
+                if (LastBanci != GetBanci())
+                {
+                    LastBanci = GetBanci();
+                    Inifile.INIWriteValue(iniParameterPath, "Summary", "LastBanci", LastBanci);
+                    WriteMachineData();
+                    for (int i = 0; i < 7; i++)
+                    {
+                        epsonRC90.jasperTester.TestCount[i] = 0;
+                        epsonRC90.jasperTester.PassCount[i] = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester1TestCount" + (i + 1).ToString(), "0");
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester1PassCount" + (i + 1).ToString(), "0");
+                        epsonRC90_2.jasperTester.TestCount[i] = 0;
+                        epsonRC90_2.jasperTester.PassCount[i] = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester2TestCount" + (i + 1).ToString(), "0");
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "Tester2PassCount" + (i + 1).ToString(), "0");
+                    }
+                    AddMessage(LastBanci + " 换班数据清零");
                 }
                 #endregion
                 #region work
@@ -867,11 +920,94 @@ namespace JasperUI
                 }
             }
         }
+        private string GetBanci()
+        {
+            string rs = "";
+            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20)
+            {
+                rs += DateTime.Now.ToString("yyyyMMdd") + "Day";
+            }
+            else
+            {
+                if (DateTime.Now.Hour >= 0 && DateTime.Now.Hour < 8)
+                {
+                    rs += DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "Night";
+                }
+                else
+                {
+                    rs += DateTime.Now.ToString("yyyyMMdd") + "Night";
+                }
+            }
+            return rs;
+        }
+        private void WriteMachineData()
+        {
+            string excelpath = @"D:\JasperMachineData.xlsx";
+
+            try
+            {
+                FileInfo fileInfo = new FileInfo(excelpath);
+                if (!File.Exists(excelpath))
+                {
+                    using (ExcelPackage package = new ExcelPackage(fileInfo))
+                    {
+                        ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Machine1Data");
+                        worksheet.Cells[1, 1].Value = "日期时间";
+                        for (int i = 0; i < 8; i++)
+                        {
+                            worksheet.Cells[1, 2 + i * 3].Value = "穴" + (i + 1).ToString() + "测试数";
+                            worksheet.Cells[1, 3 + i * 3].Value = "穴" + (i + 1).ToString() + "良品数";
+                            worksheet.Cells[1, 4 + i * 3].Value = "穴" + (i + 1).ToString() + "良率";
+                        }
+                        ExcelWorksheet worksheet1 = package.Workbook.Worksheets.Add("Machine2Data");
+                        worksheet1.Cells[1, 1].Value = "日期时间";
+                        for (int i = 0; i < 8; i++)
+                        {
+                            worksheet1.Cells[1, 2 + i * 3].Value = "穴" + (i + 1).ToString() + "测试数";
+                            worksheet1.Cells[1, 3 + i * 3].Value = "穴" + (i + 1).ToString() + "良品数";
+                            worksheet1.Cells[1, 4 + i * 3].Value = "穴" + (i + 1).ToString() + "良率";
+                        }
+
+                        package.Save();
+                    }
+                }
+
+
+                using (ExcelPackage package = new ExcelPackage(fileInfo))
+                {
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets[1];
+                    int newrow = worksheet.Dimension.End.Row + 1;
+                    worksheet.Cells[newrow, 1].Value = System.DateTime.Now.ToString();
+                    for (int i = 0; i < 8; i++)
+                    {
+                        worksheet.Cells[newrow, 2 + i * 3].Value = epsonRC90.jasperTester.TestCount[i];
+                        worksheet.Cells[newrow, 3 + i * 3].Value = epsonRC90.jasperTester.PassCount[i];
+                        worksheet.Cells[newrow, 4 + i * 3].Value = epsonRC90.jasperTester.Yield[i];
+                    }
+                    ExcelWorksheet worksheet1 = package.Workbook.Worksheets[2];
+                    newrow = worksheet1.Dimension.End.Row + 1;
+                    worksheet1.Cells[newrow, 1].Value = System.DateTime.Now.ToString();
+                    for (int i = 0; i < 8; i++)
+                    {
+                        worksheet1.Cells[newrow, 2 + i * 3].Value = epsonRC90_2.jasperTester.TestCount[i];
+                        worksheet1.Cells[newrow, 3 + i * 3].Value = epsonRC90_2.jasperTester.PassCount[i];
+                        worksheet1.Cells[newrow, 4 + i * 3].Value = epsonRC90_2.jasperTester.Yield[i];
+                    }
+                    package.Save();
+                }
+                AddMessage("保存机台生产数据完成");
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
+        }
         #endregion
         #region 事件函数
         private void ModelPrintEventProcess(string str)
         {
             AddMessage(str);
+            #region 样本
             if (str.Contains("EndSample"))
             {
                 if (str.Contains("第1台"))
@@ -880,7 +1016,7 @@ namespace JasperUI
                     Inifile.INIWriteValue(iniParameterPath, "Sample", "LastSam1", lastSam1.ToString());
                     this.Dispatcher.Invoke(new Action(() => {
                         LastSam1.Text = lastSam1.ToString();
-                    }));                    
+                    }));
                 }
                 if (str.Contains("第2台"))
                 {
@@ -889,9 +1025,43 @@ namespace JasperUI
                     this.Dispatcher.Invoke(new Action(() => {
                         LastSam2.Text = lastSam2.ToString();
                     }));
-                    
+
+                }
+
+            }
+            if (str.Contains("AskSample"))
+            {
+                if (str.Contains("第1台"))
+                {
+                    this.Dispatcher.Invoke(new Action(async () => {
+                        if ((DateTime.Now - SamStartDatetime1).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                        {
+                            await epsonRC90.TestSentNet.SendAsync("SampleTest;OK");
+                        }
+                        else
+                        {
+                            await epsonRC90.TestSentNet.SendAsync("SampleTest;NG");
+                        }
+                    }));
+
+                }
+                if (str.Contains("第2台"))
+                {
+                    this.Dispatcher.Invoke(new Action(async () => {
+                        if ((DateTime.Now - SamStartDatetime2).TotalSeconds > 0 && IsSam.IsChecked.Value)
+                        {
+                            await epsonRC90_2.TestSentNet.SendAsync("SampleTest;OK");
+                        }
+                        else
+                        {
+                            await epsonRC90_2.TestSentNet.SendAsync("SampleTest;OK");
+                        }
+                    }));
+
                 }
             }
+            #endregion
+
         }
         private void EpsonStatusUpdateProcess(string str)
         {
@@ -1009,6 +1179,10 @@ namespace JasperUI
             //var A = GlobalVars.Fx5u.ReadMultiW("D1000",2);
             //AddMessage(A[0].ToString() + " " + A[1].ToString());
             ////GlobalVars.Fx5u.WriteD("D1000",256);
+            //if (!Directory.Exists("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd")))
+            //{
+            //    Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
+            //}            
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)
@@ -1124,6 +1298,19 @@ namespace JasperUI
             }
         }
 
+        private async void StartSamClick2(object sender, RoutedEventArgs e)
+        {
+            bool r = System.Windows.MessageBox.Show("确定开始2样本测试?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            if (r)
+            {
+                if (epsonRC90_2.TestSendStatus)
+                {
+                    await epsonRC90_2.TestSentNet.SendAsync("StartSample");
+                    AddMessage("Robote2 StartSample");
+                }
+            }
+        }
+
         private void ReadImage_Click1(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -1170,14 +1357,9 @@ namespace JasperUI
 
         private async void StartSamClick(object sender, RoutedEventArgs e)
         {
-            bool r = System.Windows.MessageBox.Show("确定开始样本测试?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            bool r = System.Windows.MessageBox.Show("确定开始1样本测试?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
             if (r)
             {
-                if (epsonRC90.TestSendStatus)
-                {
-                    await epsonRC90.TestSentNet.SendAsync("StartSample");
-                    AddMessage("Robote1 StartSample");
-                }
                 if (epsonRC90_2.TestSendStatus)
                 {
                     await epsonRC90_2.TestSentNet.SendAsync("StartSample");
