@@ -30,7 +30,7 @@ namespace JasperUI.Model
         public bool[] Rc90Out = new bool[100];
         public bool CtrlStatus = false, IOReceiveStatus = false, TestSendStatus = false, TestReceiveStatus = false;
         private string iniParameterPath = System.Environment.CurrentDirectory + "\\Parameter.ini";
-
+        
         public int[,] BordIndexA = new int[12, 8];
         public int[,] BordIndexB = new int[12, 8];
         public int BordSW = 0;
@@ -40,6 +40,7 @@ namespace JasperUI.Model
         public string BordBarcode = "Null";
         public string Name;
         public JasperTester jasperTester = new JasperTester();
+        
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -412,6 +413,8 @@ namespace JasperUI.Model
                                     CheckSam();
                                     break;
                                 case "AskSample":
+                                    break;
+                                case "CheckClean":
                                     break;
                                 default:
                                     ModelPrint(Name + "无效指令： " + s);
@@ -901,4 +904,5 @@ namespace JasperUI.Model
             Yield = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         }
     }
+
 }

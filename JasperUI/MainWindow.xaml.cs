@@ -23,6 +23,8 @@ using HalconDotNet;
 using System.Diagnostics;
 using System.Data;
 using System.Windows.Forms;
+using System.Net;
+using BingLibrary.hjb;
 
 namespace JasperUI
 {
@@ -62,10 +64,13 @@ namespace JasperUI
         Leisai ls;
         List<int[]> ExIoIn, ExIoOut, ExIoIn2, ExIoOut2;
         long SWms = 0;
-        DateTime lastSam1, lastSam2;
+        DateTime lastSam1, lastSam2,lastClean1,lastClean2;
         DateTime SamStartDatetime1, SamDateBigin1, SamStartDatetime2, SamDateBigin2;
         bool IsInSampleMode1 = false, IsInSampleMode2 = false;
         string LastBanci = "";
+        string alarmExcelPath = System.Environment.CurrentDirectory + "\\Jasper报警.xlsx";
+        List<AlarmData> AlarmList = new List<AlarmData>();
+        string CurrentAlarmStr = "";
         #endregion
         public MainWindow()
         {
@@ -222,63 +227,101 @@ namespace JasperUI
                                     }
                                 }
                             }
-                            if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
+                            if (File.Exists(alarmExcelPath))
                             {
-                                if (GlobalVars.Camera2.OpenCamera("CAM2", "GigEVision"))
+                                existingFile = new FileInfo(alarmExcelPath);
+                                using (ExcelPackage package = new ExcelPackage(existingFile))
                                 {
-                                    try
+                                    // get the first worksheet in the workbook
+                                    ExcelWorksheet worksheet = package.Workbook.Worksheets[1];
+                                    for (int i = 1; i <= worksheet.Dimension.End.Row; i++)
                                     {
-                                        Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
-                                        if (oraDB.isConnect())
+                                        AlarmData ad = new AlarmData();
+                                        ad.Code = worksheet.Cells["A" + i.ToString()].Value == null ? "Null" : worksheet.Cells["A" + i.ToString()].Value.ToString();
+                                        ad.Content = worksheet.Cells["B" + i.ToString()].Value == null ? "Null" : worksheet.Cells["B" + i.ToString()].Value.ToString();
+                                        ad.Start = DateTime.Now;
+                                        ad.End = DateTime.Now;
+                                        ad.State = false;
+                                        AlarmList.Add(ad);
+                                    }
+                                }
+
+                                if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
+                                {
+                                    if (GlobalVars.Camera2.OpenCamera("CAM2", "GigEVision"))
+                                    {
+                                        try
                                         {
-                                            AddMessage("更新系统时间" + oraDB.OraclDateTime());
-                                            LastBanci = Inifile.INIGetStringValue(iniParameterPath, "Summary", "LastBanci", "null");
+                                            Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                                            if (oraDB.isConnect())
+                                            {
+                                                AddMessage("更新系统时间" + oraDB.OraclDateTime());
+                                                LastBanci = Inifile.INIGetStringValue(iniParameterPath, "Summary", "LastBanci", "null");
 
-                                            SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
-                                            SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
-                                            SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
-                                            SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
-                                            IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
+                                                SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
+                                                SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
+                                                SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
+                                                IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                IsClean.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Clean", "IsClean", "1") == "1";
 
-                                            lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
-                                            LastSam1.Text = lastSam1.ToString();
-                                            lastSam2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam2", "2019/1/1 00:00:00"));
-                                            LastSam2.Text = lastSam2.ToString();
+                                                lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
+                                                LastSam1.Text = lastSam1.ToString();
+                                                lastSam2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam2", "2019/1/1 00:00:00"));
+                                                LastSam2.Text = lastSam2.ToString();
 
-                                            MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                                            MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
-                                            string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
-                                            GlobalVars.Scan1 = new Scan();
-                                            GlobalVars.Scan1.ini(COM);
-                                            COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan2", "COM0");
-                                            GlobalVars.Scan2 = new Scan();
-                                            GlobalVars.Scan2.ini(COM);
-                                            Async.RunFuncAsync(ls.Run, null);//刷IO卡
-                                            string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
-                                            int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
-                                            GlobalVars.Fx5u = new Fx5u(ip, port);
-                                            Async.RunFuncAsync(IORun, null);
-                                            Run();
+                                                lastClean1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean1", "2019/1/1 00:00:00"));
+                                                LastClean1.Text = lastClean1.ToString();
+                                                lastClean2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean2", "2019/1/1 00:00:00"));
+                                                LastClean2.Text = lastClean2.ToString();
+
+                                                MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                                MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
+                                                线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
+                                                测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
+
+                                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
+                                                GlobalVars.Scan1 = new Scan();
+                                                GlobalVars.Scan1.ini(COM);
+                                                COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan2", "COM0");
+                                                GlobalVars.Scan2 = new Scan();
+                                                GlobalVars.Scan2.ini(COM);
+                                                Async.RunFuncAsync(ls.Run, null);//刷IO卡
+                                                string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
+                                                int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
+                                                GlobalVars.Fx5u = new Fx5u(ip, port);
+                                                Async.RunFuncAsync(IORun, null);
+                                                Run();
+                                            }
+                                        }
+                                        catch (Exception)
+                                        {
+                                            throw;
                                         }
                                     }
-                                    catch (Exception)
+                                    else
                                     {
-                                        throw;
+                                        throw new Exception("相机2打开失败");
                                     }
+
+
+
+
                                 }
                                 else
                                 {
-                                    throw new Exception("相机2打开失败");
+                                    throw new Exception("相机1打开失败");
                                 }
-                                
-
-
-
                             }
                             else
                             {
-                                throw new Exception("相机1打开失败");
+                                throw new Exception("Jasper报警.xlsx 文件不存在");
                             }
+
+
+
+
+                           
 
 
 
@@ -505,8 +548,12 @@ namespace JasperUI
             
             Stopwatch sw = new Stopwatch();
             bool m2000 = false,m2004 = false, m2001 = false, m2005 = false;
-            bool[] M2000;
+            bool[] M2000,M1000;
             bool first = true;
+            string macid, linenum, productnum;
+            macid = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+            linenum = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
+            productnum = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
             while (true)
             {
                 sw.Restart();
@@ -519,9 +566,16 @@ namespace JasperUI
                 RobotState2 = epsonRC90_2.CtrlStatus && epsonRC90_2.IOReceiveStatus && epsonRC90_2.TestReceiveStatus && epsonRC90_2.TestSendStatus;
                 UpdateUI();
                 #endregion
+                #region 清洁
+                NextClean1.Text = lastClean1.AddHours(2).ToString();
+                SpanClean1.Text = (lastClean1.AddHours(2) - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
+                NextClean2.Text = lastClean2.AddHours(2).ToString();
+                SpanClean2.Text = (lastClean2.AddHours(2) - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
+                #endregion
                 #region 样本
                 SamDateBigin1 = lastSam1.AddHours(4);
                 SamStartDatetime1 = lastSam1.AddHours(6);
+                NextSam1.Text = SamStartDatetime1.ToString();
                 SpanSam1.Text =(SamStartDatetime1 - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
                 SampleGrid1.Visibility = (DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
                 if ((DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value)
@@ -544,6 +598,7 @@ namespace JasperUI
                 }
                 SamDateBigin2 = lastSam2.AddHours(4);
                 SamStartDatetime2 = lastSam2.AddHours(6);
+                NextSam2.Text = SamStartDatetime2.ToString();
                 SpanSam2.Text = (SamStartDatetime2 - DateTime.Now).ToString().Split(new string[] { "." }, StringSplitOptions.RemoveEmptyEntries)[0];
                 SampleGrid2.Visibility = (DateTime.Now - SamDateBigin2).TotalSeconds > 0 && IsSam.IsChecked.Value ? Visibility.Visible : Visibility.Collapsed;
                 if ((DateTime.Now - SamDateBigin1).TotalSeconds > 0 && IsSam.IsChecked.Value)
@@ -836,10 +891,49 @@ namespace JasperUI
                         }
                         #endregion
                     }
+                    #region 报警
+                    GlobalVars.Fx5u.SetMultiM("M2514",new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] });
+                    M1000 = await Task.Run<bool[]>(() => {
+                        return GlobalVars.Fx5u.ReadMultiM("M1000", 96);
+                    });
+                    for (int i = 0; i < AlarmList.Count; i++)
+                    {
+                        if (M1000[i] != AlarmList[i].State)
+                        {
+                            AlarmList[i].State = M1000[i];
+                            if (AlarmList[i].State)
+                            {
+                                if (CurrentAlarmStr != AlarmList[i].Content)
+                                {
+                                    CurrentAlarmStr = AlarmList[i].Content;
+                                    AlarmList[i].Start = DateTime.Now;
+                                    AddMessage(AlarmList[i].Code + AlarmList[i].Content + "发生");
+                                    string _ip = GetIp();
+                                    string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
+                                    string _faulttime = "0";
+                                    await BigDataInsert(_ip, macid, linenum, productnum, _class, AlarmList[i].Content, AlarmList[i].Start.ToString(), _faulttime);
+                                }
+                            }
+                            else
+                            {
+                                AlarmList[i].End = DateTime.Now;
+                                AddMessage(AlarmList[i].Code + AlarmList[i].Content + "解除");
+                                string _ip = GetIp();
+                                string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
+                                string _faulttime = (AlarmList[i].End - AlarmList[i].Start).TotalMinutes.ToString("F0");
+                                if ((AlarmList[i].End - AlarmList[i].Start).TotalHours <= 0.5 && (AlarmList[i].End - AlarmList[i].Start).TotalHours > 0)
+                                {
+                                    await BigDataUpdate(_ip, AlarmList[i].Content, AlarmList[i].Start.ToString(), _class, _faulttime);
+                                }
+                            }
+                        }
+                    }
+                    #endregion
                 }
                 catch
                 { }
                 #endregion
+
                 SWms = sw.ElapsedMilliseconds;
             }
         }
@@ -919,6 +1013,84 @@ namespace JasperUI
                     }
                 }
             }
+        }
+        string GetIp()
+        {
+            string ipstring = "127.0.0.1";
+            string hostName = Dns.GetHostName();
+            System.Net.IPAddress[] addressList = Dns.GetHostAddresses(hostName);//会返回所有地址，包括IPv4和IPv6 
+            foreach (var item in addressList)
+            {
+                ipstring = item.ToString();
+                string[] ss = ipstring.Split(new string[] { "." }, StringSplitOptions.None);
+                if (ss.Length == 4 && ss[0] == "10")
+                {
+                    return ipstring;
+                }
+            }
+            return "127.0.0.1";
+        }
+        private async Task BigDataInsert(string COMPUTERIP, string MACID, string LINEID, string PARTNUM, string CLASS, string FAULTID, string FAULTSTARTTIME, string FAULTTIME)
+        {
+            int result = await Task.Run<int>(() =>
+            {
+                try
+                {
+                    string _TDate;
+                    if (DateTime.Now.Hour < 8)
+                    {
+                        _TDate = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+                    }
+                    else
+                    {
+                        _TDate = DateTime.Now.ToString("yyyyMMdd");
+                    }
+
+                    string StrMySQL = "Server=10.89.164.62;Database=dcdb;Uid=dcu;Pwd=dcudata;pooling=false;CharSet=utf8;port=3306";
+                    string stm = "insert into TED_FAULT_DATA (WORKSTATION,COMPUTERIP,MACID,LINEID,PARTNUM,TDATE,TTIME,CLASS,FAULTID,FAULTSTARTTIME,FAULTTIME,REPAIRRESULT,REPAIRER,FL01) VALUES ('JASPER','"
+    + COMPUTERIP + "','" + MACID + "','" + LINEID + "','" + PARTNUM + "','" + _TDate + "','" + DateTime.Now.ToString("HHmmss") + "','"
+    + CLASS + "','" + FAULTID + "','" + FAULTSTARTTIME + "','" + FAULTTIME + "','NA','NA','ON')";
+                    Mysql mysql = new Mysql();
+                    int res = -1;
+                    if (mysql.Connect(StrMySQL))
+                    {
+                        res = mysql.executeQuery(stm);
+                    }
+                    mysql.DisConnect();
+                    return res;
+                }
+                catch (Exception ex)
+                {
+                    return -999;
+                }
+            });
+            AddMessage("上传报警" + result.ToString());
+        }
+        private async Task BigDataUpdate(string ip, string content, string starttime, string _class, string faulttime)
+        {
+            int result = await Task.Run<int>(() =>
+            {
+                try
+                {
+                    string StrMySQL = "Server=10.89.164.62;Database=dcdb;Uid=dcu;Pwd=dcudata;pooling=false;CharSet=utf8;port=3306";
+
+                    string stm = "update TED_FAULT_DATA SET CLASS = '" + _class + "',FAULTTIME = '" + faulttime + "',FL01 = 'OFF' WHERE COMPUTERIP = '"
+                    + ip + "' AND FAULTID = '" + content + "' AND FAULTSTARTTIME = '" + starttime + "'";
+                    Mysql mysql = new Mysql();
+                    int res = -1;
+                    if (mysql.Connect(StrMySQL))
+                    {
+                        res = mysql.executeQuery(stm);
+                    }
+                    mysql.DisConnect();
+                    return res;
+                }
+                catch (Exception ex)
+                {
+                    return -999;
+                }
+            });
+            AddMessage("更新报警" + result.ToString());
         }
         private string GetBanci()
         {
@@ -1054,10 +1226,45 @@ namespace JasperUI
                         }
                         else
                         {
-                            await epsonRC90_2.TestSentNet.SendAsync("SampleTest;OK");
+                            await epsonRC90_2.TestSentNet.SendAsync("SampleTest;NG");
                         }
                     }));
 
+                }
+            }
+            if (str.Contains("CheckClean"))
+            {
+                if (str.Contains("第1台"))
+                {
+                    this.Dispatcher.Invoke(new Action(async () => {
+                        if ((DateTime.Now - lastClean1.AddHours(2)).TotalSeconds > 0 && IsClean.IsChecked.Value)
+                        {
+                            await epsonRC90.TestSentNet.SendAsync("StartClean");
+                            lastClean1 = DateTime.Now;
+                            LastClean1.Text = lastClean1.ToString();
+                            Inifile.INIWriteValue(iniParameterPath, "Clean", "LastClean1", lastClean1.ToString());
+                        }
+                        else
+                        {
+                            await epsonRC90.TestSentNet.SendAsync("EndClean");
+                        }
+                    }));
+                }
+                if (str.Contains("第2台"))
+                {
+                    this.Dispatcher.Invoke(new Action(async () => {
+                        if ((DateTime.Now - lastClean2.AddHours(2)).TotalSeconds > 0 && IsClean.IsChecked.Value)
+                        {
+                            await epsonRC90_2.TestSentNet.SendAsync("StartClean");
+                            lastClean2 = DateTime.Now;
+                            LastClean2.Text = lastClean2.ToString();
+                            Inifile.INIWriteValue(iniParameterPath, "Clean", "LastClean2", lastClean2.ToString());
+                        }
+                        else
+                        {
+                            await epsonRC90_2.TestSentNet.SendAsync("EndClean");
+                        }
+                    }));
                 }
             }
             #endregion
@@ -1113,6 +1320,8 @@ namespace JasperUI
         {
             Inifile.INIWriteValue(iniParameterPath, "System", "MachineID", MachineID.Text);
             Inifile.INIWriteValue(iniParameterPath, "System", "MachineID2", MachineID2.Text);
+            Inifile.INIWriteValue(iniParameterPath, "System", "线体", 线体.Text);
+            Inifile.INIWriteValue(iniParameterPath, "System", "测试料号", 测试料号.Text);
         }
 
         private void MsgTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -1182,7 +1391,8 @@ namespace JasperUI
             //if (!Directory.Exists("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd")))
             //{
             //    Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
-            //}            
+            //} 
+            //bool[] aa = new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] };
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)
@@ -1311,6 +1521,128 @@ namespace JasperUI
             }
         }
 
+        private async void AlarmButton_Click(object sender, RoutedEventArgs e)
+        {
+            AlarmButton.IsEnabled = false;
+            await Task.Run(() => {
+                try
+                {
+                    if (!Directory.Exists("D:\\报警记录\\" + DateTime.Now.ToString("yyyyMMdd")))
+                    {
+                        Directory.CreateDirectory("D:\\报警记录\\" + DateTime.Now.ToString("yyyyMMdd"));
+                    }
+                    string path = "D:\\报警记录\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "AlarmSimple.csv";
+                    Csvfile.savetocsv(path, new string[] { "Content", "Count", "Time(min)" });
+                    string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
+                    string _ip = GetIp();
+                    string _date;
+                    if (DateTime.Now.Hour < 8)
+                    {
+                        _date = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+                    }
+                    else
+                    {
+                        _date = DateTime.Now.ToString("yyyyMMdd");
+                    }
+
+                    int alarmcount = 0; float alarmelapsed = 0;
+                    foreach (var item in AlarmList)
+                    {
+                        string StrMySQL = "Server=10.89.164.62;Database=dcdb;Uid=dcu;Pwd=dcudata;pooling=false;CharSet=utf8;port=3306";
+                        string stm = "SELECT * FROM TED_FAULT_DATA WHERE COMPUTERIP ='" + _ip + "' AND FAULTID = '" + item.Content +
+    "' AND TDATE = '" + _date + "' AND CLASS = '" + _class + "' AND FL01 = '" + "OFF'";
+                        Mysql mysql = new Mysql();
+                        if (mysql.Connect(StrMySQL))
+                        {
+                            DataSet ds = mysql.Select(stm);
+                            DataTable dt = ds.Tables["table0"];
+                            if (dt.Rows.Count > 0)
+                            {
+                                int i = 0;
+                                float elapsed = 0;
+                                foreach (DataRow datarow in dt.Rows)
+                                {
+                                    try
+                                    {
+                                        elapsed += float.Parse((string)datarow["FAULTTIME"]);
+                                    }
+                                    catch
+                                    { }
+                                    i++;
+                                }
+                                if (i > 0)
+                                {
+                                    alarmcount += i;
+                                    alarmelapsed += elapsed;
+                                    Csvfile.savetocsv(path, new string[] { item.Content, i.ToString(), elapsed.ToString("F1") });
+                                }
+                            }
+                        }
+                        mysql.DisConnect();
+                    }
+                    Process process1 = new Process();
+                    process1.StartInfo.FileName = path;
+                    process1.StartInfo.Arguments = "";
+                    process1.StartInfo.WindowStyle = ProcessWindowStyle.Maximized;
+                    process1.Start();
+                }
+                catch (Exception ex)
+                {
+                    AddMessage(ex.Message);
+                }
+            });
+            await Task.Run(() => {
+                try
+                {
+                    string path = "D:\\报警记录\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "AlarmTotal.csv";
+                    string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
+                    string _ip = GetIp();
+                    string _date;
+                    if (DateTime.Now.Hour < 8)
+                    {
+                        _date = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+                    }
+                    else
+                    {
+                        _date = DateTime.Now.ToString("yyyyMMdd");
+                    }
+                    string StrMySQL = "Server=10.89.164.62;Database=dcdb;Uid=dcu;Pwd=dcudata;pooling=false;CharSet=utf8;port=3306";
+                    string stm = "SELECT * FROM TED_FAULT_DATA WHERE COMPUTERIP ='" + _ip +
+                            "' AND TDATE = '" + _date + "' AND CLASS = '" + _class + "' AND FL01 = '" + "OFF'";
+
+                    Mysql mysql = new Mysql();
+                    if (mysql.Connect(StrMySQL))
+                    {
+                        DataSet ds = mysql.Select(stm);
+                        DataTable dt = ds.Tables["table0"];
+                        if (dt.Rows.Count > 0)
+                        {
+                            string strHead = DateTime.Now.ToString("yyyyMMddHHmmss") + "AlarmTotal";
+                            string strColumns = "";
+                            for (int i = 0; i < dt.Columns.Count; i++)
+                            {
+                                strColumns += dt.Columns[i].ColumnName + ",";
+                            }
+                            strColumns = strColumns.Substring(0, strColumns.Length - 1);
+                            Csvfile.dt2csv(dt, path, strHead, strColumns);
+
+                            Process process1 = new Process();
+                            process1.StartInfo.FileName = path;
+                            process1.StartInfo.Arguments = "";
+                            process1.StartInfo.WindowStyle = ProcessWindowStyle.Maximized;
+                            process1.Start();
+                        }
+                    }
+                    mysql.DisConnect();
+                }
+                catch (Exception ex)
+                {
+                    AddMessage(ex.Message);
+                }
+            });
+            AlarmButton.IsEnabled = true;
+        }
+
         private void ReadImage_Click1(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -1353,6 +1685,8 @@ namespace JasperUI
             Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem2", SamItem2.Text);
             Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem3", SamItem3.Text);
             Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem4", SamItem4.Text);
+            Inifile.INIWriteValue(iniParameterPath, "Sample", "IsSam", IsSam.IsChecked.Value ? "1" : "0");
+            Inifile.INIWriteValue(iniParameterPath, "Clean", "IsClean", IsClean.IsChecked.Value ? "1" : "0");
         }
 
         private async void StartSamClick(object sender, RoutedEventArgs e)
@@ -1416,5 +1750,13 @@ namespace JasperUI
 
 
         }
+    }
+    class AlarmData
+    {
+        public string Code { set; get; }
+        public string Content { set; get; }
+        public DateTime Start { set; get; }
+        public DateTime End { set; get; }
+        public bool State { set; get; }
     }
 }

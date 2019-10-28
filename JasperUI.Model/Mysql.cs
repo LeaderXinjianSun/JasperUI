@@ -34,8 +34,30 @@ namespace JasperUI.Model
             {
                 return false;
             }
-
-
+        }
+        public bool Connect(string strMySQL)
+        {
+            StrMySQL = strMySQL;
+            try
+            {
+                if (conn == null)
+                {
+                    conn = new MySqlConnection(StrMySQL);
+                    conn.Open();
+                }
+                if (conn.State == ConnectionState.Open)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
         public void DisConnect()
         {
