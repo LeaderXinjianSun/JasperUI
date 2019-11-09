@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20191028" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20191109" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -340,7 +340,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10">
-                        <CheckBox Name="IsSam" Content="样本"></CheckBox>
+                        <CheckBox Name="IsSam" Content="样本" Visibility="Collapsed"></CheckBox>
                         <CheckBox Name="IsClean" Content="清洁"></CheckBox>
                         <Button Width="60" Height="60" Margin="0,50,0,0" Content="开始1" Click="StartSamClick"></Button>
                         <Button Width="60" Height="60" Margin="0,10,0,0" Content="开始2" Click="StartSamClick2"></Button>

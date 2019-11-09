@@ -262,7 +262,8 @@ namespace JasperUI
                                                 SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
                                                 SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
                                                 SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
-                                                IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                //IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                IsSam.IsChecked = true;
                                                 IsClean.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Clean", "IsClean", "1") == "1";
 
                                                 lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
