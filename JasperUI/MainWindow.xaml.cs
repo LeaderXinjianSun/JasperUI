@@ -1695,10 +1695,10 @@ namespace JasperUI
             bool r = System.Windows.MessageBox.Show("确定开始1样本测试?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
             if (r)
             {
-                if (epsonRC90_2.TestSendStatus)
+                if (epsonRC90.TestSendStatus)
                 {
-                    await epsonRC90_2.TestSentNet.SendAsync("StartSample");
-                    AddMessage("Robote2 StartSample");
+                    await epsonRC90.TestSentNet.SendAsync("StartSample");
+                    AddMessage("Robote1 StartSample");
                 }
             }
         }
