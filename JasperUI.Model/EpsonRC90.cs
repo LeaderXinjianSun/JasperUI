@@ -82,6 +82,14 @@ namespace JasperUI.Model
                         default:
                             break;
                     }
+                    if (jasperTester.TestCount[i] > 0)
+                    {
+                        jasperTester.Yield[i] = (double)jasperTester.PassCount[i] / (double)jasperTester.TestCount[i] * 100;
+                    }
+                    else
+                    {
+                        jasperTester.Yield[i] = 0;
+                    }
                 }
                 catch
                 { }
@@ -622,21 +630,63 @@ namespace JasperUI.Model
                     {
                         if (barcode[i] != "error")
                         {
-                            bool isAoi = false;
+
                             Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
-                            string sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
-                            DataSet ds = oraDB.executeQuery(sqlstr);
-                            DataTable dt1 = ds.Tables[0];
-                            if ((string)dt1.Rows[0][0] == "0")
+                            if (oraDB.isConnect())
                             {
-                                isAoi = true;
+                                string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode + "'";
+                                DataSet ds = oraDB.executeQuery(sqlstr);
+                                DataTable dt = ds.Tables[0];
+                                if (dt.Rows.Count > 0)
+                                {
+                                    if (dt.Rows[0]["PCSSER"] != null)
+                                    {
+                                        bool isAoi = false;
+                                        sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                                        ds = oraDB.executeQuery(sqlstr);
+                                        DataTable dt1 = ds.Tables[0];
+                                        if ((string)dt1.Rows[0][0] == "0")
+                                        {
+                                            isAoi = true;
+                                        }
+                                        //条码 板条码 产品状态 日期 时间
+                                        BarInfo[barindex[i]].Barcode = barcode[i];
+                                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                        BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
+                                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                    }
+                                    else
+                                    {
+                                        ModelPrint(Name + "条码" + barcode + " PCSSER信息缺失");
+                                        BarInfo[barindex[i]].Barcode = "FAIL";
+                                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                        BarInfo[barindex[i]].Status = 2;
+                                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                    }
+                                }
+                                else
+                                {
+                                    ModelPrint(Name + "未查询到条码" + barcode +  "信息");
+                                    BarInfo[barindex[i]].Barcode = "FAIL";
+                                    BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                    BarInfo[barindex[i]].Status = 2;
+                                    BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                    BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                }
+                                
                             }
-                            //条码 板条码 产品状态 日期 时间
-                            BarInfo[barindex[i]].Barcode = barcode[i];
-                            BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                            BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
-                            BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                            BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                            else
+                            {
+                                ModelPrint(Name + "数据库连接失败");
+                                BarInfo[barindex[i]].Barcode = "FAIL";
+                                BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                BarInfo[barindex[i]].Status = 2;
+                                BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                            }
+                            oraDB.disconnect();
                         }
                         else
                         {
@@ -733,7 +783,19 @@ namespace JasperUI.Model
             
             for (int i = 0; i < 8; i++)
             {
-                jasperTester.Result[i] = rststr[2 + i] == "4" ? "P" : "F";
+                switch (rststr[2 + i])
+                {
+                    case "3":
+                        jasperTester.Result[i] = "F";
+                        break;
+                    case "4":
+                        jasperTester.Result[i] = "P";
+                        break;
+                    default:
+                        jasperTester.Result[i] = "N";
+                        break;
+                }
+                //jasperTester.Result[i] = rststr[2 + i] == "4" ? "P" : "F";
                 if (rststr[2 + i] == "4" || rststr[2 + i] == "3")
                 {
                     jasperTester.TestCount[i]++;
@@ -744,7 +806,7 @@ namespace JasperUI.Model
                 }
                 if (jasperTester.TestCount[i] > 0)
                 {
-                    jasperTester.Yield[i] = (double)jasperTester.PassCount[i] / (double)jasperTester.TestCount[i];
+                    jasperTester.Yield[i] = (double)jasperTester.PassCount[i] / (double)jasperTester.TestCount[i] * 100;
                 }
                 else
                 {

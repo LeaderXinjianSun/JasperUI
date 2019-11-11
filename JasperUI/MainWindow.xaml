@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20191110" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20191112" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -67,7 +67,7 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:Tester x:Name="Result1_8"></local:Tester>
+                        <local:Tester x:Name="Result1_8" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result1_7" Grid.Column="1" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result1_6" Grid.Column="2" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result1_5" Grid.Column="3" Margin="5"></local:Tester>
@@ -120,7 +120,7 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:Tester x:Name="Result2_8"></local:Tester>
+                        <local:Tester x:Name="Result2_8" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result2_7" Grid.Column="1" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result2_6" Grid.Column="2" Margin="5"></local:Tester>
                         <local:Tester x:Name="Result2_5" Grid.Column="3" Margin="5"></local:Tester>

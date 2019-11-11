@@ -262,8 +262,8 @@ namespace JasperUI
                                                 SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
                                                 SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
                                                 SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
-                                                //IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
-                                                IsSam.IsChecked = true;
+                                                IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                //IsSam.IsChecked = false;
                                                 IsClean.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Clean", "IsClean", "1") == "1";
 
                                                 lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
@@ -294,6 +294,7 @@ namespace JasperUI
                                                 Async.RunFuncAsync(IORun, null);
                                                 Run();
                                             }
+                                            oraDB.disconnect();
                                         }
                                         catch (Exception)
                                         {
@@ -548,7 +549,7 @@ namespace JasperUI
         {
             
             Stopwatch sw = new Stopwatch();
-            bool m2000 = false,m2004 = false, m2001 = false, m2005 = false;
+            bool m2000 = false, m2004 = false, m2001 = false, m2005 = false, m2006 = false, m2007 = false; ;
             bool[] M2000,M1000;
             bool first = true;
             string macid, linenum, productnum;
@@ -710,6 +711,8 @@ namespace JasperUI
                             m2004 = M2000[4];
                             m2001 = M2000[1];
                             m2005 = M2000[5];
+                            m2006 = M2000[6];
+                            m2007 = M2000[7];
                         }
                         #region 工位1
                         if (m2000 != M2000[0])
@@ -891,6 +894,36 @@ namespace JasperUI
                             }
                         }
                         #endregion
+                        if (m2006 != M2000[6])
+                        {
+                            m2006 = M2000[6];
+                            if (M2000[6])
+                            {
+                                if (epsonRC90.CtrlStatus)
+                                {
+                                    await epsonRC90.CtrlNet.SendAsync("$pause");
+                                }
+                                if (epsonRC90_2.CtrlStatus)
+                                {
+                                    await epsonRC90_2.CtrlNet.SendAsync("$pause");
+                                }
+                            }
+                        }
+                        if (m2007 != M2000[7])
+                        {
+                            m2007 = M2000[7];
+                            if (M2000[7])
+                            {
+                                if (epsonRC90.CtrlStatus)
+                                {
+                                    await epsonRC90.CtrlNet.SendAsync("$continue");
+                                }
+                                if (epsonRC90_2.CtrlStatus)
+                                {
+                                    await epsonRC90_2.CtrlNet.SendAsync("$continue");
+                                }
+                            }
+                        }
                     }
                     #region 报警
                     GlobalVars.Fx5u.SetMultiM("M2514",new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] });
@@ -902,31 +935,34 @@ namespace JasperUI
                         if (M1000[i] != AlarmList[i].State)
                         {
                             AlarmList[i].State = M1000[i];
-                            if (AlarmList[i].State)
+                            if (AlarmList[i].Content != "Null")
                             {
-                                if (CurrentAlarmStr != AlarmList[i].Content)
+                                if (AlarmList[i].State)
                                 {
-                                    CurrentAlarmStr = AlarmList[i].Content;
-                                    AlarmList[i].Start = DateTime.Now;
-                                    AddMessage(AlarmList[i].Code + AlarmList[i].Content + "发生");
+                                    if (CurrentAlarmStr != AlarmList[i].Content)
+                                    {
+                                        CurrentAlarmStr = AlarmList[i].Content;
+                                        AlarmList[i].Start = DateTime.Now;
+                                        AddMessage(AlarmList[i].Code + AlarmList[i].Content + "发生");
+                                        string _ip = GetIp();
+                                        string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
+                                        string _faulttime = "0";
+                                        await BigDataInsert(_ip, macid, linenum, productnum, _class, AlarmList[i].Content, AlarmList[i].Start.ToString(), _faulttime);
+                                    }
+                                }
+                                else
+                                {
+                                    AlarmList[i].End = DateTime.Now;
+                                    AddMessage(AlarmList[i].Code + AlarmList[i].Content + "解除");
                                     string _ip = GetIp();
                                     string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
-                                    string _faulttime = "0";
-                                    await BigDataInsert(_ip, macid, linenum, productnum, _class, AlarmList[i].Content, AlarmList[i].Start.ToString(), _faulttime);
+                                    string _faulttime = (AlarmList[i].End - AlarmList[i].Start).TotalMinutes.ToString("F0");
+                                    if ((AlarmList[i].End - AlarmList[i].Start).TotalHours <= 0.5 && (AlarmList[i].End - AlarmList[i].Start).TotalHours > 0)
+                                    {
+                                        await BigDataUpdate(_ip, AlarmList[i].Content, AlarmList[i].Start.ToString(), _class, _faulttime);
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                AlarmList[i].End = DateTime.Now;
-                                AddMessage(AlarmList[i].Code + AlarmList[i].Content + "解除");
-                                string _ip = GetIp();
-                                string _class = DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20 ? "D" : "N";
-                                string _faulttime = (AlarmList[i].End - AlarmList[i].Start).TotalMinutes.ToString("F0");
-                                if ((AlarmList[i].End - AlarmList[i].Start).TotalHours <= 0.5 && (AlarmList[i].End - AlarmList[i].Start).TotalHours > 0)
-                                {
-                                    await BigDataUpdate(_ip, AlarmList[i].Content, AlarmList[i].Start.ToString(), _class, _faulttime);
-                                }
-                            }
+                            } 
                         }
                     }
                     #endregion
@@ -1394,6 +1430,7 @@ namespace JasperUI
             //    Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
             //} 
             //bool[] aa = new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] };
+            //Yield1_8.Yield = 99;
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)

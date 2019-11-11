@@ -55,26 +55,26 @@ namespace JasperUI
                 }
                 catch
                 { }
-                yieldRate.YieldTextBlock.Text = yield.ToString("F1") ;
+                yieldRate.YieldTextBlock.Text = yield.ToString("F1") + "%" ;
                 if (yield >= 98)
                 {
-                    yieldRate.Background = Brushes.Blue;
+                    yieldRate.YieldGrid.Background = Brushes.LightBlue;
                 }
                 else
                 {
                     if (yield >= 95)
                     {
-                        yieldRate.Background = Brushes.Green;
+                        yieldRate.YieldGrid.Background = Brushes.Green;
                     }
                     else
                     {
                         if (yield == 0)
                         {
-                            yieldRate.Background = Brushes.Black;
+                            yieldRate.YieldGrid.Background = Brushes.Transparent;
                         }
                         else
                         {
-                            yieldRate.Background = Brushes.Red;
+                            yieldRate.YieldGrid.Background = Brushes.Red;
                         }
                     }
                 }
