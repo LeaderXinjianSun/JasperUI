@@ -40,7 +40,8 @@ namespace JasperUI.Model
         public string BordBarcode = "Null";
         public string Name;
         public JasperTester jasperTester = new JasperTester();
-        
+        public List<string> SamOpenList, SamShortList;
+        public static bool IsRetestMode { set; get; } = false;
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -634,37 +635,27 @@ namespace JasperUI.Model
                             Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
                             if (oraDB.isConnect())
                             {
-                                string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode + "'";
+                                string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode[i] + "'";
                                 DataSet ds = oraDB.executeQuery(sqlstr);
                                 DataTable dt = ds.Tables[0];
                                 if (dt.Rows.Count > 0)
                                 {
-                                    if (dt.Rows[0]["PCSSER"] != null)
+
+                                    bool isAoi = false;
+                                    sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                                    ds = oraDB.executeQuery(sqlstr);
+                                    DataTable dt1 = ds.Tables[0];
+                                    if ((string)dt1.Rows[0][0] == "0")
                                     {
-                                        bool isAoi = false;
-                                        sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
-                                        ds = oraDB.executeQuery(sqlstr);
-                                        DataTable dt1 = ds.Tables[0];
-                                        if ((string)dt1.Rows[0][0] == "0")
-                                        {
-                                            isAoi = true;
-                                        }
-                                        //条码 板条码 产品状态 日期 时间
-                                        BarInfo[barindex[i]].Barcode = barcode[i];
-                                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                                        BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
-                                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                        isAoi = true;
                                     }
-                                    else
-                                    {
-                                        ModelPrint(Name + "条码" + barcode + " PCSSER信息缺失");
-                                        BarInfo[barindex[i]].Barcode = "FAIL";
-                                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                                        BarInfo[barindex[i]].Status = 2;
-                                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
-                                    }
+                                    //条码 板条码 产品状态 日期 时间
+                                    BarInfo[barindex[i]].Barcode = barcode[i];
+                                    BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                    BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
+                                    BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                    BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+
                                 }
                                 else
                                 {
@@ -737,7 +728,7 @@ namespace JasperUI.Model
             {
                 str += BarInfo[i + index * 8].Barcode + "|";
             }
-            str += "0";
+            str += IsRetestMode ? "9" : "0";
             ModelPrint(Name + str);
             bool r = await udp.SendAsync(str);
             for (int i = 0; i < 8; i++)
@@ -830,7 +821,7 @@ namespace JasperUI.Model
             }
 
         }
-        async void CheckSam()
+        public async void CheckSam()
         {
             string MachineID = "1";
             switch (Name)
@@ -843,100 +834,128 @@ namespace JasperUI.Model
                     break;
                 default:
                     break;
-            }
-            
-            string[] NgItems = new string[4];
-            for (int i = 0; i < 4; i++)
-            {
-                NgItems[i] = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem" + (i + 1).ToString(), "OK");
-            }
+            }           
             await Task.Run(async() => {
-                Oracle oraDB = new Oracle("zdtdb", "ictdata", "ictdata*168");
-                string sqlstr = "select * from BARSAMREC where CDATE = '" + DateTime.Now.ToString("yyyyMMdd") +"' and CTIME > '" + DateTime.Now.AddHours(-2).ToString("HHmmss") + "' and SR01 in ('";
-                for (int i = 0; i < 8; i++)
-                {
-                    sqlstr += MachineID + "_" + (i + 1).ToString() + "'";
-                    if (i < 7)
-                    {
-                        sqlstr += ",'";
-                    }
-                    if (i == 7)
-                    {
-                        sqlstr += ") ";
-                    }
-                }                
-                DataSet ds = oraDB.executeQuery(sqlstr);
-                DataTable dt1 = ds.Tables[0];
-                string Columns = "";
-                for (int i = 0; i < dt1.Columns.Count - 1; i++)
-                {
-                    Columns += dt1.Columns[i].ColumnName + ",";
-                }
-                Columns += dt1.Columns[dt1.Columns.Count - 1].ColumnName;
-                if (!Directory.Exists("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd")))
-                {
-                    Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
-                }
-                Csvfile.dt2csv(dt1, "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv", "Sample", Columns);
                 try
                 {
-                    Process process1 = new Process();
-                    process1.StartInfo.FileName = "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv";
-                    process1.StartInfo.Arguments = "";
-                    process1.StartInfo.WindowStyle = ProcessWindowStyle.Maximized;
-                    process1.Start();
+                    Oracle oraDB = new Oracle("zdtdb", "ictdata", "ictdata*168");
+                    string sqlstr = "select * from BARSAMREC where CDATE = '" + DateTime.Now.ToString("yyyyMMdd") + "' and CTIME > '" + DateTime.Now.AddHours(-2).ToString("HHmmss") + "' and SR01 in ('";
+                    for (int i = 0; i < 8; i++)
+                    {
+                        sqlstr += MachineID + "_" + (i + 1).ToString() + "'";
+                        if (i < 7)
+                        {
+                            sqlstr += ",'";
+                        }
+                        if (i == 7)
+                        {
+                            sqlstr += ") ";
+                        }
+                    }
+                    DataSet ds = oraDB.executeQuery(sqlstr);
+                    DataTable dt1 = ds.Tables[0];
+                    string Columns = "";
+                    for (int i = 0; i < dt1.Columns.Count - 1; i++)
+                    {
+                        Columns += dt1.Columns[i].ColumnName + ",";
+                    }
+                    Columns += dt1.Columns[dt1.Columns.Count - 1].ColumnName;
+                    if (!Directory.Exists("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd")))
+                    {
+                        Directory.CreateDirectory("D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd"));
+                    }
+                    Csvfile.dt2csv(dt1, "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv", "Sample", Columns);
+                    try
+                    {
+                        Process process1 = new Process();
+                        process1.StartInfo.FileName = "D:\\样本测试\\" + DateTime.Now.ToString("yyyyMMdd") + "\\" + DateTime.Now.ToString("yyyyMMddHHmmss") + "Sample.csv";
+                        process1.StartInfo.Arguments = "";
+                        process1.StartInfo.WindowStyle = ProcessWindowStyle.Maximized;
+                        process1.Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelPrint(Name + ex.Message);
+                    }
+                    int[][] Result = new int[3][];
+                    Result[0] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                    Result[1] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                    Result[2] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                    for (int j = 0; j < 8; j++)
+                    {
+                        DataRow[] dtr = dt1.Select(string.Format("NGITEM = '{0}' AND TRES = '{1}' AND SR01 = '{2}'", "OK", "OK", MachineID + "_" + (j + 1).ToString()));
+                        Result[0][j] = dtr.Length;
+                        if (dtr.Length == 0)
+                        {
+                            ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OK" + " 样本未测到");
+                        }
+                    }
+                    string NgItems = "";
+                    foreach (string item in SamOpenList)
+                    {
+                        NgItems += "'" + item + "',";
+                    }
+                    NgItems = NgItems.Substring(0, NgItems.Length - 1);
+                    for (int j = 0; j < 8; j++)
+                    {
+                        DataRow[] dtr = dt1.Select(string.Format("TRES IN ({0}) AND SR01 = '{1}'", NgItems, MachineID + "_" + (j + 1).ToString()));
+                        Result[1][j] = dtr.Length;
+                        if (dtr.Length == 0)
+                        {
+                            ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OPEN" + " 样本未测到");
+                        }
+                    }
+                    NgItems = "";
+                    foreach (string item in SamShortList)
+                    {
+                        NgItems += "'" + item + "',";
+                    }
+                    NgItems = NgItems.Substring(0, NgItems.Length - 1);
+                    for (int j = 0; j < 8; j++)
+                    {
+                        DataRow[] dtr = dt1.Select(string.Format("TRES IN ({0}) AND SR01 = '{1}'", NgItems, MachineID + "_" + (j + 1).ToString()));
+                        Result[2][j] = dtr.Length;
+                        if (dtr.Length == 0)
+                        {
+                            ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "SHORT" + " 样本未测到");
+                        }
+                    }
+                    string rst = "";
+                    bool success = true;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        //rst += i.ToString() + ";";
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if (Result[i][j] == 0)
+                            {
+                                success = false;
+                                rst += "0;";
+                            }
+                            else
+                            {
+                                rst += "1;";
+                            }
+                        }
+                    }
+                    string ResultStr;
+                    if (success)
+                    {
+                        ResultStr = "EndSample";
+                        await udp.SendAsync("testModel:0");
+                    }
+                    else
+                    {
+                        ResultStr = "RestartSample;" + rst;
+                    }
+                    await TestSentNet.SendAsync(ResultStr);
+                    ModelPrint(Name + ResultStr);
                 }
                 catch (Exception ex)
                 {
-                    ModelPrint(ex.Message);
+                    ModelPrint(Name + ex.Message);
                 }
-                int[][] Result = new int[4][];
-                Result[0] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                Result[1] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                Result[2] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                Result[3] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 8; j++)
-                    {
-                        DataRow[] dtr = dt1.Select(string.Format("NGITEM = '{0}' AND TRES = '{1}' AND SR01 = '{2}'", NgItems[i], NgItems[i], MachineID + "_" + (j + 1).ToString()));
-                        Result[i][j] = dtr.Length;
-                        if (dtr.Length == 0)
-                        {
-                            ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + NgItems[i] + " 样本未测到");
-                        }
-                    }
-                }
-                string rst = "";
-                bool success = true;
-                for (int i = 0; i < 4; i++)
-                {
-                    //rst += i.ToString() + ";";
-                    for (int j = 0; j < 8; j++)
-                    {
-                        if (Result[i][j] == 0)
-                        {
-                            success = false;
-                            rst += "0;";
-                        }
-                        else
-                        {
-                            rst += "1;";
-                        }
-                    }
-                }
-                string ResultStr;
-                if (success)
-                {
-                    ResultStr = "EndSample";
-                    await udp.SendAsync("testModel:0");
-                }
-                else
-                {
-                    ResultStr = "RestartSample;" + rst;
-                }
-                await TestSentNet.SendAsync(ResultStr);
-                ModelPrint(Name + ResultStr);
+                
             });
         }
 

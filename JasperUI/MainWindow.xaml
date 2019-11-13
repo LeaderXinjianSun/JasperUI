@@ -41,7 +41,7 @@
                 </Grid.Background>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
-                    <ColumnDefinition Width="10"></ColumnDefinition>
+                    <ColumnDefinition Width="50"></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Grid>
@@ -67,14 +67,14 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:Tester x:Name="Result1_8" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_7" Grid.Column="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_6" Grid.Column="2" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_5" Grid.Column="3" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_4" Grid.Row="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result1_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_8" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_7" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_6" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_5" Grid.Row="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_4" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_3" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_2" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result1_1" Margin="5"></local:Tester>
                     </Grid>
                     <Grid Grid.Row="3" Grid.RowSpan="2">
                         <Grid.RowDefinitions>
@@ -87,14 +87,14 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:YieldRate x:Name="Yield1_8" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_7" Grid.Column="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_6" Grid.Column="2" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_5" Grid.Column="3" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_4" Grid.Row="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield1_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_8" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_7" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_6" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_5" Grid.Row="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_4" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_3" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_2" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield1_1" Margin="5"></local:YieldRate>
                     </Grid>
                 </Grid>
                 <Grid Grid.Column="2">
@@ -120,14 +120,14 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:Tester x:Name="Result2_8" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_7" Grid.Column="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_6" Grid.Column="2" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_5" Grid.Column="3" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_4" Grid.Row="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
-                        <local:Tester x:Name="Result2_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_8" Grid.Row="1" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_7" Grid.Row="1" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_6" Grid.Row="1" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_5" Grid.Row="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_4" Grid.Column="3" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_3" Grid.Column="2" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_2" Grid.Column="1" Margin="5"></local:Tester>
+                        <local:Tester x:Name="Result2_1" Margin="5"></local:Tester>
                     </Grid>
                     <Grid Grid.Row="3" Grid.RowSpan="2">
                         <Grid.RowDefinitions>
@@ -140,14 +140,14 @@
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <local:YieldRate x:Name="Yield2_8" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_7" Grid.Column="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_6" Grid.Column="2" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_5" Grid.Column="3" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_4" Grid.Row="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_3" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_2" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
-                        <local:YieldRate x:Name="Yield2_1" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_8" Grid.Row="1" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_7" Grid.Row="1" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_6" Grid.Row="1" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_5" Grid.Row="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_4" Grid.Column="3" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_3" Grid.Column="2" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_2" Grid.Column="1" Margin="5"></local:YieldRate>
+                        <local:YieldRate x:Name="Yield2_1" Margin="5"></local:YieldRate>
                     </Grid>
                 </Grid>
                 
@@ -320,7 +320,7 @@
                         <ColumnDefinition Width="2*"></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Vertical" Margin="10">
+                    <!--<StackPanel Orientation="Vertical" Margin="10">
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <TextBlock Text="项目1 "></TextBlock>
                             <TextBox Name="SamItem1" Width="150"></TextBox>
@@ -338,10 +338,11 @@
                             <TextBlock Text="项目4 "></TextBlock>
                             <TextBox Name="SamItem4" Width="150"></TextBox>
                         </StackPanel>
-                    </StackPanel>
+                    </StackPanel>-->
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10">
                         <CheckBox Name="IsSam" Content="样本" Visibility="Collapsed"></CheckBox>
                         <CheckBox Name="IsClean" Content="清洁"></CheckBox>
+                        <CheckBox Name="IsReTest" Content="复测" Checked="IsReTest_Checked" Unchecked="IsReTest_Unchecked"></CheckBox>
                         <Button Width="60" Height="60" Margin="0,50,0,0" Content="开始1" Click="StartSamClick"></Button>
                         <Button Width="60" Height="60" Margin="0,10,0,0" Content="开始2" Click="StartSamClick2"></Button>
                     </StackPanel>

@@ -245,75 +245,107 @@ namespace JasperUI
                                         AlarmList.Add(ad);
                                     }
                                 }
-
-                                if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
+                                ExIoExcelPath = System.Environment.CurrentDirectory + "\\样本规格.xlsx";
+                                if (File.Exists(ExIoExcelPath))
                                 {
-                                    if (GlobalVars.Camera2.OpenCamera("CAM2", "GigEVision"))
+                                    existingFile = new FileInfo(ExIoExcelPath);
+                                    using (ExcelPackage package = new ExcelPackage(existingFile))
                                     {
-                                        try
+                                        // get the first worksheet in the workbook
+                                        ExcelWorksheet worksheet = package.Workbook.Worksheets[1];
+                                        epsonRC90.SamOpenList = new List<string>();
+                                        epsonRC90.SamShortList = new List<string>();
+                                        epsonRC90_2.SamOpenList = new List<string>();
+                                        epsonRC90_2.SamShortList = new List<string>();
+                                        for (int i = 4; i <= worksheet.Dimension.End.Row; i++)
                                         {
-                                            Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
-                                            if (oraDB.isConnect())
+                                            if (worksheet.Cells["C" + i.ToString()].Value != null)
                                             {
-                                                AddMessage("更新系统时间" + oraDB.OraclDateTime());
-                                                LastBanci = Inifile.INIGetStringValue(iniParameterPath, "Summary", "LastBanci", "null");
-
-                                                SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
-                                                SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
-                                                SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
-                                                SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
-                                                IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
-                                                //IsSam.IsChecked = false;
-                                                IsClean.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Clean", "IsClean", "1") == "1";
-
-                                                lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
-                                                LastSam1.Text = lastSam1.ToString();
-                                                lastSam2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam2", "2019/1/1 00:00:00"));
-                                                LastSam2.Text = lastSam2.ToString();
-
-                                                lastClean1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean1", "2019/1/1 00:00:00"));
-                                                LastClean1.Text = lastClean1.ToString();
-                                                lastClean2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean2", "2019/1/1 00:00:00"));
-                                                LastClean2.Text = lastClean2.ToString();
-
-                                                MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
-                                                MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
-                                                线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
-                                                测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
-
-                                                string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
-                                                GlobalVars.Scan1 = new Scan();
-                                                GlobalVars.Scan1.ini(COM);
-                                                COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan2", "COM0");
-                                                GlobalVars.Scan2 = new Scan();
-                                                GlobalVars.Scan2.ini(COM);
-                                                Async.RunFuncAsync(ls.Run, null);//刷IO卡
-                                                string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
-                                                int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
-                                                GlobalVars.Fx5u = new Fx5u(ip, port);
-                                                Async.RunFuncAsync(IORun, null);
-                                                Run();
+                                                epsonRC90.SamOpenList.Add(worksheet.Cells["C" + i.ToString()].Value.ToString());
+                                                epsonRC90_2.SamOpenList.Add(worksheet.Cells["C" + i.ToString()].Value.ToString());
                                             }
-                                            oraDB.disconnect();
+                                            if (worksheet.Cells["D" + i.ToString()].Value != null)
+                                            {
+                                                epsonRC90.SamShortList.Add(worksheet.Cells["D" + i.ToString()].Value.ToString());
+                                                epsonRC90_2.SamShortList.Add(worksheet.Cells["D" + i.ToString()].Value.ToString());
+                                            }
                                         }
-                                        catch (Exception)
+                                    }
+
+                                    if (GlobalVars.Camera.OpenCamera("CAM1", "GigEVision"))
+                                    {
+                                        if (GlobalVars.Camera2.OpenCamera("CAM2", "GigEVision"))
                                         {
-                                            throw;
+                                            try
+                                            {
+                                                Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                                                if (oraDB.isConnect())
+                                                {
+                                                    AddMessage("更新系统时间" + oraDB.OraclDateTime());
+                                                    LastBanci = Inifile.INIGetStringValue(iniParameterPath, "Summary", "LastBanci", "null");
+
+                                                    //SamItem1.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem1", "OK");
+                                                    //SamItem2.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem2", "OK");
+                                                    //SamItem3.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem3", "OK");
+                                                    //SamItem4.Text = Inifile.INIGetStringValue(iniParameterPath, "Sample", "SamItem4", "OK");
+                                                    IsSam.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Sample", "IsSam", "1") == "1";
+                                                    //IsSam.IsChecked = false;
+                                                    IsClean.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "Clean", "IsClean", "1") == "1";
+
+                                                    lastSam1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam1", "2019/1/1 00:00:00"));
+                                                    LastSam1.Text = lastSam1.ToString();
+                                                    lastSam2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Sample", "LastSam2", "2019/1/1 00:00:00"));
+                                                    LastSam2.Text = lastSam2.ToString();
+
+                                                    lastClean1 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean1", "2019/1/1 00:00:00"));
+                                                    LastClean1.Text = lastClean1.ToString();
+                                                    lastClean2 = Convert.ToDateTime(Inifile.INIGetStringValue(iniParameterPath, "Clean", "LastClean2", "2019/1/1 00:00:00"));
+                                                    LastClean2.Text = lastClean2.ToString();
+
+                                                    MachineID.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
+                                                    MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
+                                                    线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
+                                                    测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
+
+                                                    string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
+                                                    GlobalVars.Scan1 = new Scan();
+                                                    GlobalVars.Scan1.ini(COM);
+                                                    COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan2", "COM0");
+                                                    GlobalVars.Scan2 = new Scan();
+                                                    GlobalVars.Scan2.ini(COM);
+                                                    Async.RunFuncAsync(ls.Run, null);//刷IO卡
+                                                    string ip = Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Ip", "192.168.0.20");
+                                                    int port = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "FX5U", "Port", "502"));
+                                                    GlobalVars.Fx5u = new Fx5u(ip, port);
+                                                    Async.RunFuncAsync(IORun, null);
+                                                    Run();
+                                                }
+                                                oraDB.disconnect();
+                                            }
+                                            catch (Exception)
+                                            {
+                                                throw;
+                                            }
                                         }
+                                        else
+                                        {
+                                            throw new Exception("相机2打开失败");
+                                        }
+
+
+
+
                                     }
                                     else
                                     {
-                                        throw new Exception("相机2打开失败");
+                                        throw new Exception("相机1打开失败");
                                     }
-
-
-
-
                                 }
                                 else
                                 {
-                                    throw new Exception("相机1打开失败");
+                                    throw new Exception("样本规格.xlsx 文件不存在");
                                 }
+                                
                             }
                             else
                             {
@@ -682,7 +714,7 @@ namespace JasperUI
                     LastBanci = GetBanci();
                     Inifile.INIWriteValue(iniParameterPath, "Summary", "LastBanci", LastBanci);
                     WriteMachineData();
-                    for (int i = 0; i < 7; i++)
+                    for (int i = 0; i < 8; i++)
                     {
                         epsonRC90.jasperTester.TestCount[i] = 0;
                         epsonRC90.jasperTester.PassCount[i] = 0;
@@ -1431,6 +1463,7 @@ namespace JasperUI
             //} 
             //bool[] aa = new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] };
             //Yield1_8.Yield = 99;
+            //epsonRC90.CheckSam();
         }
 
         private void GrapButton_Click(object sender, RoutedEventArgs e)
@@ -1528,6 +1561,16 @@ namespace JasperUI
             {
                 AddMessage(ex.Message);
             }
+        }
+
+        private void IsReTest_Checked(object sender, RoutedEventArgs e)
+        {
+            EpsonRC90.IsRetestMode = true;
+        }
+
+        private void IsReTest_Unchecked(object sender, RoutedEventArgs e)
+        {
+            EpsonRC90.IsRetestMode = false;
         }
 
         private void ReadImage_Click2(object sender, RoutedEventArgs e)
@@ -1717,15 +1760,15 @@ namespace JasperUI
             }
         }
 
-        private void SaveSamItem(object sender, RoutedEventArgs e)
-        {
-            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem1", SamItem1.Text);
-            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem2", SamItem2.Text);
-            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem3", SamItem3.Text);
-            Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem4", SamItem4.Text);
-            Inifile.INIWriteValue(iniParameterPath, "Sample", "IsSam", IsSam.IsChecked.Value ? "1" : "0");
-            Inifile.INIWriteValue(iniParameterPath, "Clean", "IsClean", IsClean.IsChecked.Value ? "1" : "0");
-        }
+        //private void SaveSamItem(object sender, RoutedEventArgs e)
+        //{
+        //    Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem1", SamItem1.Text);
+        //    Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem2", SamItem2.Text);
+        //    Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem3", SamItem3.Text);
+        //    Inifile.INIWriteValue(iniParameterPath, "Sample", "SamItem4", SamItem4.Text);
+        //    Inifile.INIWriteValue(iniParameterPath, "Sample", "IsSam", IsSam.IsChecked.Value ? "1" : "0");
+        //    Inifile.INIWriteValue(iniParameterPath, "Clean", "IsClean", IsClean.IsChecked.Value ? "1" : "0");
+        //}
 
         private async void StartSamClick(object sender, RoutedEventArgs e)
         {
