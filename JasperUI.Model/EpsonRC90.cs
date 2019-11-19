@@ -651,7 +651,7 @@ namespace JasperUI.Model
                                     }
                                     //条码 板条码 产品状态 日期 时间
                                     BarInfo[barindex[i]].Barcode = barcode[i];
-                                    BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                    BarInfo[barindex[i]].BordBarcode = isAoi ? "FAIL" : BordBarcode;
                                     BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
                                     BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
                                     BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
@@ -883,7 +883,7 @@ namespace JasperUI.Model
                     Result[2] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     for (int j = 0; j < 8; j++)
                     {
-                        DataRow[] dtr = dt1.Select(string.Format("NGITEM = '{0}' AND TRES = '{1}' AND SR01 = '{2}'", "OK", "OK", MachineID + "_" + (j + 1).ToString()));
+                        DataRow[] dtr = dt1.Select(string.Format("TRES = '{0}' AND SR01 = '{1}'", "OK", MachineID + "_" + (j + 1).ToString()));
                         Result[0][j] = dtr.Length;
                         if (dtr.Length == 0)
                         {
