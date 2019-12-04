@@ -627,6 +627,8 @@ namespace JasperUI.Model
                 barindex[1] = index1 + 4 + index * 8;
                 try
                 {
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
                     for (int i = 0; i < 2; i++)
                     {
                         if (barcode[i] != "error")
@@ -637,6 +639,8 @@ namespace JasperUI.Model
                             {
                                 string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode[i] + "'";
                                 DataSet ds = oraDB.executeQuery(sqlstr);
+
+
                                 DataTable dt = ds.Tables[0];
                                 if (dt.Rows.Count > 0)
                                 {
@@ -644,14 +648,17 @@ namespace JasperUI.Model
                                     bool isAoi = false;
                                     sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
                                     ds = oraDB.executeQuery(sqlstr);
+
+
+
                                     DataTable dt1 = ds.Tables[0];
                                     if ((string)dt1.Rows[0][0] == "0")
                                     {
                                         isAoi = true;
                                     }
                                     //条码 板条码 产品状态 日期 时间
-                                    BarInfo[barindex[i]].Barcode = barcode[i];
-                                    BarInfo[barindex[i]].BordBarcode = isAoi ? "FAIL" : BordBarcode;
+                                    BarInfo[barindex[i]].Barcode = isAoi ? "FAIL" : barcode[i];
+                                    BarInfo[barindex[i]].BordBarcode = BordBarcode;
                                     BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
                                     BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
                                     BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
@@ -659,7 +666,7 @@ namespace JasperUI.Model
                                 }
                                 else
                                 {
-                                    ModelPrint(Name + "未查询到条码" + barcode +  "信息");
+                                    ModelPrint(Name + "未查询到条码" + barcode[i] + "信息");
                                     BarInfo[barindex[i]].Barcode = "FAIL";
                                     BarInfo[barindex[i]].BordBarcode = BordBarcode;
                                     BarInfo[barindex[i]].Status = 2;
@@ -700,18 +707,29 @@ namespace JasperUI.Model
                                 break;
                         }
                         string machinestr = Inifile.INIGetStringValue(iniParameterPath, "System", mid, "Jasper01");
+
+                        //Console.WriteLine("1. " + sw.ElapsedMilliseconds.ToString() + "ms");
+
                         Mysql mysql = new Mysql();
                         if (mysql.Connect())
                         {
                             string stm = "INSERT INTO BARBIND (MACHINE,SCBARCODE,SCBODBAR,SDATE,STIME,PCSSER,RESULT) VALUES ('" + machinestr + "','" + BarInfo[barindex[i]].Barcode + "','"
                             + BordBarcode + "','" + BarInfo[barindex[i]].TDate + "','" + BarInfo[barindex[i]].TTime + "','" + (barindex[i] + 1).ToString() + "','" + BarInfo[barindex[i]].Status.ToString() + "')";
+
+                            //Console.WriteLine("2. " + sw.ElapsedMilliseconds.ToString() + "ms");
+
                             mysql.executeQuery(stm);
+
+                            //Console.WriteLine("3. " + sw.ElapsedMilliseconds.ToString() + "ms");
+
                         }
                         mysql.DisConnect();
                     }
                     string retstr = mes[2] + ";" + BarInfo[barindex[0]].Status.ToString() + ";" + BarInfo[barindex[1]].Status.ToString();
                     await TestSentNet.SendAsync("BarcodeInfo1;" + retstr);
-                    ModelPrint(Name + "BarcodeInfo1;" + retstr);
+                    ModelPrint(Name + "BarcodeInfo1;" + retstr + " " + sw.ElapsedMilliseconds.ToString() + "ms");
+                    Console.WriteLine(Name + "BarcodeInfo1;" + retstr + " " + sw.ElapsedMilliseconds.ToString() + "ms");
+                    sw.Stop();                    
                 }
                 catch (Exception ex)
                 {
