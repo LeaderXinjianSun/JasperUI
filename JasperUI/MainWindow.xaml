@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20191204" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20191218" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -21,12 +21,13 @@
             <RowDefinition></RowDefinition>
             <RowDefinition Height="30"></RowDefinition>
         </Grid.RowDefinitions>
-        <Menu>
+        <Menu VerticalAlignment="Center">
             <MenuItem Header="主页" Click="HomePageSelect"></MenuItem>
             <MenuItem Header="参数" Click="ParameterPageSelect"></MenuItem>
             <MenuItem Header="扫码" Click="CameraPageSelect"></MenuItem>
+            <MenuItem Header="耗材" Click="MaterialPageSelect"></MenuItem>
         </Menu>
-        <Grid Grid.Row="1" Name="HomePage" Visibility="Visible">
+        <Grid Grid.Row="1" Name="HomePage" Visibility="Visible" Opacity="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*"></RowDefinition>
                 <RowDefinition></RowDefinition>
@@ -95,6 +96,9 @@
                         <local:YieldRate x:Name="Yield1_3" Grid.Column="2" Margin="5"></local:YieldRate>
                         <local:YieldRate x:Name="Yield1_2" Grid.Column="1" Margin="5"></local:YieldRate>
                         <local:YieldRate x:Name="Yield1_1" Margin="5"></local:YieldRate>
+                    </Grid>
+                    <Grid x:Name="MatetialTextGrid" Grid.Row="5">
+                        <TextBlock x:Name="MatetialMessage" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="26" TextWrapping="Wrap"></TextBlock>
                     </Grid>
                 </Grid>
                 <Grid Grid.Column="2">
@@ -320,8 +324,13 @@
                         <ColumnDefinition Width="2*"></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <!--<StackPanel Orientation="Vertical" Margin="10">
+                    <StackPanel Orientation="Vertical" Margin="10">
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="样本管控次数 "></TextBlock>
+                            <TextBox Name="SamLimitCount" Width="50"></TextBox>
+                            <Button Margin="5,0" Width="60" Content="保存" Click="SaveParameterButtonClick"></Button>
+                        </StackPanel>
+                        <!--<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <TextBlock Text="项目1 "></TextBlock>
                             <TextBox Name="SamItem1" Width="150"></TextBox>
                             <Button Margin="5,0" Width="60" Content="保存" Click="SaveSamItem"></Button>
@@ -337,8 +346,8 @@
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <TextBlock Text="项目4 "></TextBlock>
                             <TextBox Name="SamItem4" Width="150"></TextBox>
-                        </StackPanel>
-                    </StackPanel>-->
+                        </StackPanel>-->
+                    </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10">
                         <CheckBox Name="IsSam" Content="样本" Visibility="Collapsed"></CheckBox>
                         <CheckBox Name="IsClean" Content="清洁"></CheckBox>
@@ -470,6 +479,29 @@
 
             </GroupBox>
            
+        </Grid>
+        <Grid Grid.Row="1" Name="MatetialPage" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="耗材显示">
+                <DataGrid x:Name="MaterialDataGrid"></DataGrid>
+            </GroupBox>
+            <GroupBox  Grid.Column="1" Header="操作">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Canvas>
+                        <ComboBox x:Name="MaterialComboxBox" Canvas.Top="10" Canvas.Left="10" Width="150" IsEditable="True" IsReadOnly="True"></ComboBox>
+                        <Button Canvas.Top="50" Canvas.Left="130" Content="更换" Click="MaterialButtonClick"></Button>
+                    </Canvas>
+                </Grid>
+            </GroupBox>
         </Grid>
         <StatusBar Grid.Row="2">
             <StatusBarItem>

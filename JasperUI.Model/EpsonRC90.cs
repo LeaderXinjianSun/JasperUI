@@ -519,7 +519,7 @@ namespace JasperUI.Model
                                                 //}
                                             }
                                             //条码 板条码 产品状态 日期 时间
-                                            BarInfo[i].Barcode = (string)dr["SCBARCODE"];
+                                            BarInfo[i].Barcode = isAoi ? "FAIL" : (string)dr["SCBARCODE"];
                                             BarInfo[i].BordBarcode = BordBarcode;
                                             BarInfo[i].Status = isAoi ? 1 : 0;
                                             BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
@@ -899,6 +899,7 @@ namespace JasperUI.Model
                     Result[0] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     Result[1] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     Result[2] = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                    int SamLimitCount = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "System", "SamLimitCount", "999"));
                     for (int j = 0; j < 8; j++)
                     {
                         DataRow[] dtr = dt1.Select(string.Format("TRES = '{0}' AND SR01 = '{1}'", "OK", MachineID + "_" + (j + 1).ToString()));
@@ -906,6 +907,22 @@ namespace JasperUI.Model
                         if (dtr.Length == 0)
                         {
                             ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OK" + " 样本未测到");
+                        }
+                        else
+                        {
+                            for (int i = 0; i < dtr.Length; i++)
+                            {
+                                string barcode = (string)dtr[i]["BARCODE"];
+                                string _sqlstr = "select * from BARSAMREC where BARCODE = '" + barcode + "'";
+                                DataSet _ds = oraDB.executeQuery(sqlstr);
+                                DataTable _dt1 = ds.Tables[0];
+                                if (_dt1.Rows.Count > SamLimitCount)
+                                {
+                                    ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OK" + " 样本 " + barcode + " 超过管控次数 " + _dt1.Rows.Count.ToString() + " > " + SamLimitCount.ToString());
+                                    Result[0][j] = 0;
+                                    break;
+                                }
+                            }
                         }
                     }
                     string NgItems = "";
@@ -922,6 +939,22 @@ namespace JasperUI.Model
                         {
                             ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OPEN" + " 样本未测到");
                         }
+                        else
+                        {
+                            for (int i = 0; i < dtr.Length; i++)
+                            {
+                                string barcode = (string)dtr[i]["BARCODE"];
+                                string _sqlstr = "select * from BARSAMREC where BARCODE = '" + barcode + "'";
+                                DataSet _ds = oraDB.executeQuery(sqlstr);
+                                DataTable _dt1 = ds.Tables[0];
+                                if (_dt1.Rows.Count > SamLimitCount)
+                                {
+                                    ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "OPEN" + " 样本 " + barcode + " 超过管控次数 " + _dt1.Rows.Count.ToString() + " > " + SamLimitCount.ToString());
+                                    Result[1][j] = 0;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     NgItems = "";
                     foreach (string item in SamShortList)
@@ -937,7 +970,24 @@ namespace JasperUI.Model
                         {
                             ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "SHORT" + " 样本未测到");
                         }
+                        else
+                        {
+                            for (int i = 0; i < dtr.Length; i++)
+                            {
+                                string barcode = (string)dtr[i]["BARCODE"];
+                                string _sqlstr = "select * from BARSAMREC where BARCODE = '" + barcode + "'";
+                                DataSet _ds = oraDB.executeQuery(sqlstr);
+                                DataTable _dt1 = ds.Tables[0];
+                                if (_dt1.Rows.Count > SamLimitCount)
+                                {
+                                    ModelPrint(MachineID + "_" + (j + 1).ToString() + " " + "SHORT" + " 样本 " + barcode + " 超过管控次数 " + _dt1.Rows.Count.ToString() + " > " + SamLimitCount.ToString());
+                                    Result[2][j] = 0;
+                                    break;
+                                }
+                            }
+                        }
                     }
+                    oraDB.disconnect();
                     string rst = "";
                     bool success = true;
                     for (int i = 0; i < 3; i++)

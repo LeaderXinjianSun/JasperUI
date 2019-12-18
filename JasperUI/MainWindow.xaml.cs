@@ -25,6 +25,7 @@ using System.Data;
 using System.Windows.Forms;
 using System.Net;
 using BingLibrary.hjb;
+using System.Collections.ObjectModel;
 
 namespace JasperUI
 {
@@ -71,10 +72,16 @@ namespace JasperUI
         string alarmExcelPath = System.Environment.CurrentDirectory + "\\Jasper报警.xlsx";
         List<AlarmData> AlarmList = new List<AlarmData>();
         string CurrentAlarmStr = "";
+        public DataTable Mdt = new DataTable();
+        ExcelPackage MPackage;
+        ExcelWorksheet MWorksheet;
+        int MaterialStatus = 0;
+        int haocaisavetimes = 0;
         #endregion
         public MainWindow()
         {
             InitializeComponent();
+            MaterialDataGrid.ItemsSource = Mdt.DefaultView;
 
             System.Diagnostics.Process[] myProcesses = System.Diagnostics.Process.GetProcessesByName("JasperUI");//获取指定的进程名   
             if (myProcesses.Length > 1) //如果可以获取到知道的进程名则说明已经启动
@@ -84,31 +91,63 @@ namespace JasperUI
             }
             else
             {
-                string ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
-                string mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp", "192.168.0.130");
-                int mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort", "11099"));
-                epsonRC90 = new EpsonRC90(ip, mcuip, mcuport, "第1台");
-                ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp2", "192.168.0.40");
-                mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp2", "192.168.0.130");
-                mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort2", "11099"));
-                epsonRC90_2 = new EpsonRC90(ip, mcuip, mcuport, "第2台");
+                FileInfo existingFile = new FileInfo("C:\\耗材.xlsx");
+                try
+                {
+                    MPackage = new ExcelPackage(existingFile);
+                    MWorksheet = MPackage.Workbook.Worksheets[1];
+                    
+                    for (int i = 1; i <= MWorksheet.Dimension.End.Column; i++)
+                    {
+                        Mdt.Columns.Add((string)MWorksheet.Cells[2, i].Value);
+                    }
 
-                GlobalVars.viewController1 = new HWndCtrl(ImageWindow1);
-                GlobalVars.roiController1 = new ROIController();
-                GlobalVars.viewController1.useROIController(GlobalVars.roiController1);
-                GlobalVars.viewController1.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+                    ObservableCollection<string> myItemsSource = new ObservableCollection<string>();
+                    for (int i = 3; i <= MWorksheet.Dimension.End.Row; i++)
+                    {
+                        DataRow dr = Mdt.NewRow();
+                        for (int j = 1; j <= MWorksheet.Dimension.End.Column; j++)
+                        {
+                            dr[j - 1] = MWorksheet.Cells[i, j].Value;
+                        }
+                        myItemsSource.Add((string)MWorksheet.Cells[i , 1].Value);
+                        Mdt.Rows.Add(dr);
+                    }
+                    MaterialComboxBox.ItemsSource = myItemsSource;
+                    MaterialComboxBox.SelectedIndex = 0;
 
-                GlobalVars.viewController2 = new HWndCtrl(ImageWindow2);
-                GlobalVars.roiController2 = new ROIController();
-                GlobalVars.viewController2.useROIController(GlobalVars.roiController2);
-                GlobalVars.viewController2.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+                    string ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp", "192.168.0.30");
+                    string mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp", "192.168.0.130");
+                    int mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort", "11099"));
+                    epsonRC90 = new EpsonRC90(ip, mcuip, mcuport, "第1台");
+                    ip = Inifile.INIGetStringValue(iniParameterPath, "Epson", "EpsonIp2", "192.168.0.40");
+                    mcuip = Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUIp2", "192.168.0.130");
+                    mcuport = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "MCU", "MCUPort2", "11099"));
+                    epsonRC90_2 = new EpsonRC90(ip, mcuip, mcuport, "第2台");
+
+                    GlobalVars.viewController1 = new HWndCtrl(ImageWindow1);
+                    GlobalVars.roiController1 = new ROIController();
+                    GlobalVars.viewController1.useROIController(GlobalVars.roiController1);
+                    GlobalVars.viewController1.setViewState(HWndCtrl.MODE_VIEW_MOVE);
+
+                    GlobalVars.viewController2 = new HWndCtrl(ImageWindow2);
+                    GlobalVars.roiController2 = new ROIController();
+                    GlobalVars.viewController2.useROIController(GlobalVars.roiController2);
+                    GlobalVars.viewController2.setViewState(HWndCtrl.MODE_VIEW_MOVE);
 
 
-                epsonRC90.ModelPrint += ModelPrintEventProcess;
-                epsonRC90.EpsonStatusUpdate += EpsonStatusUpdateProcess;
+                    epsonRC90.ModelPrint += ModelPrintEventProcess;
+                    epsonRC90.EpsonStatusUpdate += EpsonStatusUpdateProcess;
 
-                epsonRC90_2.ModelPrint += ModelPrintEventProcess;
-                epsonRC90_2.EpsonStatusUpdate += EpsonStatusUpdateProcess2;
+                    epsonRC90_2.ModelPrint += ModelPrintEventProcess;
+                    epsonRC90_2.EpsonStatusUpdate += EpsonStatusUpdateProcess2;
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message, "耗材表格文件异常");
+                    System.Windows.Application.Current.Shutdown();
+                }
+                
             }
 
 
@@ -306,6 +345,8 @@ namespace JasperUI
                                                     MachineID2.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID2", "Jasper01");
                                                     线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
                                                     测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
+
+                                                    SamLimitCount.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "SamLimitCount", "999");
 
                                                     string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
                                                     GlobalVars.Scan1 = new Scan();
@@ -579,10 +620,10 @@ namespace JasperUI
         }
         async void Run()
         {
-            
+
             Stopwatch sw = new Stopwatch();
             bool m2000 = false, m2004 = false, m2001 = false, m2005 = false, m2006 = false, m2007 = false; ;
-            bool[] M2000,M1000;
+            bool[] M2000, M1000; bool[] Y42; bool[] y42 = new bool[8] { false, false, false, false, false, false, false, false };
             bool first = true;
             string macid, linenum, productnum;
             macid = Inifile.INIGetStringValue(iniParameterPath, "System", "MachineID", "Jasper01");
@@ -956,6 +997,23 @@ namespace JasperUI
                                 }
                             }
                         }
+                        Y42 = await Task.Run<bool[]>(() => {
+                            return GlobalVars.Fx5u.ReadMultiM("Y22", 8);
+                        });
+                        if (Y42 != null)
+                        {
+                            for (int i = 0; i < 8; i++)
+                            {
+                                if (y42[i] != Y42[i])
+                                {
+                                    y42[i] = Y42[i];
+                                    if (Y42[i])
+                                    {
+                                        MWorksheet.Cells[5, 6].Value = Convert.ToInt32(MWorksheet.Cells[5, 6].Value) + 1;
+                                    }
+                                }
+                            }
+                        }
                     }
                     #region 报警
                     GlobalVars.Fx5u.SetMultiM("M2514",new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] });
@@ -1002,7 +1060,78 @@ namespace JasperUI
                 catch
                 { }
                 #endregion
+                #region 耗材
+                if (MWorksheet != null)
+                {
+                    Mdt.Clear();
+                    for (int i = 3; i <= MWorksheet.Dimension.End.Row; i++)
+                    {
+                        DataRow dr = Mdt.NewRow();
+                        for (int j = 1; j <= MWorksheet.Dimension.End.Column; j++)
+                        {
+                            dr[j - 1] = MWorksheet.Cells[i, j].Value;
+                        }
+                        Mdt.Rows.Add(dr);
+                    }
+                    //0:耗材正常
+                    //1:耗材预警
+                    //2:耗材异常
+                    MaterialStatus = 0;
+                    for (int i = 3; i <= MWorksheet.Dimension.End.Row; i++)
+                    {
+                        try
+                        {
+                            if (Convert.ToInt32(MWorksheet.Cells[i, 6].Value) > Convert.ToInt32(MWorksheet.Cells[i, 4].Value))
+                            {
+                                MatetialMessage.Text = (string)MWorksheet.Cells[i, 1].Value + "," + (string)MWorksheet.Cells[i, 3].Value + " 使用寿命到达上限";
+                                MaterialStatus = 2;
+                                break;
+                            }
+                            else
+                            {
+                                if (Convert.ToInt32(MWorksheet.Cells[i, 6].Value) > Convert.ToInt32(MWorksheet.Cells[i, 5].Value))
+                                {
+                                    MatetialMessage.Text = (string)MWorksheet.Cells[i, 1].Value + "," + (string)MWorksheet.Cells[i, 3].Value + " 使用寿命预警";
+                                    MaterialStatus = 1;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MatetialMessage.Text = ex.Message;
+                            MaterialStatus = 2;
+                            AddMessage(ex.Message);
+                        }
 
+                    }
+                    switch (MaterialStatus)
+                    {
+                        case 1:
+                            MatetialTextGrid.Background = Brushes.Violet;
+                            MatetialTextGrid.Visibility = Visibility.Visible;
+                            break;
+                        case 2:
+                            MatetialTextGrid.Background = Brushes.Red;
+                            MatetialTextGrid.Visibility = Visibility.Visible;
+                            break;
+                        default:
+                            MatetialTextGrid.Visibility = Visibility.Collapsed;
+                            break;
+                    }
+                    if (haocaisavetimes++ > 10)
+                    {
+                        haocaisavetimes = 0;
+                        try
+                        {
+                            MPackage.Save();
+                        }
+                        catch (Exception ex)
+                        {
+                            AddMessage(ex.Message);
+                        }
+                    }
+                }
+                #endregion
                 SWms = sw.ElapsedMilliseconds;
             }
         }
@@ -1278,6 +1407,10 @@ namespace JasperUI
                         if ((DateTime.Now - SamStartDatetime1).TotalSeconds > 0 && IsSam.IsChecked.Value)
                         {
                             await epsonRC90.TestSentNet.SendAsync("SampleTest;OK");
+                            if (epsonRC90.TestSendStatus)
+                            {
+                                await epsonRC90.TestSentNet.SendAsync("StartSample");
+                            }
                         }
                         else
                         {
@@ -1292,6 +1425,10 @@ namespace JasperUI
                         if ((DateTime.Now - SamStartDatetime2).TotalSeconds > 0 && IsSam.IsChecked.Value)
                         {
                             await epsonRC90_2.TestSentNet.SendAsync("SampleTest;OK");
+                            if (epsonRC90_2.TestSendStatus)
+                            {
+                                await epsonRC90_2.TestSentNet.SendAsync("StartSample");
+                            }
                         }
                         else
                         {
@@ -1301,6 +1438,7 @@ namespace JasperUI
 
                 }
             }
+            #endregion
             if (str.Contains("CheckClean"))
             {
                 if (str.Contains("第1台"))
@@ -1336,8 +1474,66 @@ namespace JasperUI
                     }));
                 }
             }
-            #endregion
+            if (str.Contains("CheckHaocai"))
+            {
+                if (str.Contains("第1台"))
+                {
+                    if (MaterialStatus > 1)
+                    {
+                        epsonRC90.TestSentNet.SendAsync("CheckInfo;0");
+                    }
+                    else
+                    {
+                        epsonRC90.TestSentNet.SendAsync("CheckInfo;1");
+                    }
+                }
+                if (str.Contains("第2台"))
+                {
+                    if (MaterialStatus > 1)
+                    {
+                        epsonRC90_2.TestSentNet.SendAsync("CheckInfo;0");
+                    }
+                    else
+                    {
+                        epsonRC90_2.TestSentNet.SendAsync("CheckInfo;1");
+                    }
+                }
+            }
+            if (str.Contains("TestResult"))
+            {
+                if (str.Contains("第1台"))
+                {
+                    try
+                    {
+                        MWorksheet.Cells[3, 6].Value = Convert.ToInt32(MWorksheet.Cells[3, 6].Value) + 2;
+                        MWorksheet.Cells[6, 6].Value = Convert.ToInt32(MWorksheet.Cells[6, 6].Value) + 1;
+                        MWorksheet.Cells[7, 6].Value = Convert.ToInt32(MWorksheet.Cells[7, 6].Value) + 1;
+                        MWorksheet.Cells[8, 6].Value = Convert.ToInt32(MWorksheet.Cells[8, 6].Value) + 1;
+                        MWorksheet.Cells[9, 6].Value = Convert.ToInt32(MWorksheet.Cells[9, 6].Value) + 1;
+                    }
+                    catch (Exception ex)
+                    {
+                        AddMessage(ex.Message);
+                    }
 
+                }
+                if (str.Contains("第2台"))
+                {
+                    try
+                    {
+                        MWorksheet.Cells[4, 6].Value = Convert.ToInt32(MWorksheet.Cells[4, 6].Value) + 2;
+                        MWorksheet.Cells[10, 6].Value = Convert.ToInt32(MWorksheet.Cells[10, 6].Value) + 1;
+                        MWorksheet.Cells[11, 6].Value = Convert.ToInt32(MWorksheet.Cells[11, 6].Value) + 1;
+                        MWorksheet.Cells[12, 6].Value = Convert.ToInt32(MWorksheet.Cells[12, 6].Value) + 1;
+                        MWorksheet.Cells[13, 6].Value = Convert.ToInt32(MWorksheet.Cells[13, 6].Value) + 1;
+                    }
+                    catch (Exception ex)
+                    {
+                        AddMessage(ex.Message);
+                    }
+
+                }
+            }
         }
         private void EpsonStatusUpdateProcess(string str)
         {
@@ -1370,6 +1566,7 @@ namespace JasperUI
             HomePage.Visibility = Visibility.Visible;
             ParameterPage.Visibility = Visibility.Collapsed;
             CameraPage.Visibility = Visibility.Collapsed;
+            MatetialPage.Visibility = Visibility.Collapsed;
         }
 
         private void ParameterPageSelect(object sender, RoutedEventArgs e)
@@ -1377,12 +1574,14 @@ namespace JasperUI
             HomePage.Visibility = Visibility.Collapsed;
             ParameterPage.Visibility = Visibility.Visible;
             CameraPage.Visibility = Visibility.Collapsed;
+            MatetialPage.Visibility = Visibility.Collapsed;
         }
         private void CameraPageSelect(object sender, RoutedEventArgs e)
         {
             HomePage.Visibility = Visibility.Collapsed;
             ParameterPage.Visibility = Visibility.Collapsed;
             CameraPage.Visibility = Visibility.Visible;
+            MatetialPage.Visibility = Visibility.Collapsed;
         }
 
         private void SaveParameterButtonClick(object sender, RoutedEventArgs e)
@@ -1391,6 +1590,15 @@ namespace JasperUI
             Inifile.INIWriteValue(iniParameterPath, "System", "MachineID2", MachineID2.Text);
             Inifile.INIWriteValue(iniParameterPath, "System", "线体", 线体.Text);
             Inifile.INIWriteValue(iniParameterPath, "System", "测试料号", 测试料号.Text);
+            try
+            {
+                int.Parse(SamLimitCount.Text);
+            }
+            catch
+            {
+                SamLimitCount.Text = "999";
+            }
+            Inifile.INIWriteValue(iniParameterPath, "System", "SamLimitCount", SamLimitCount.Text);
         }
 
         private void MsgTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -1571,6 +1779,33 @@ namespace JasperUI
         private void IsReTest_Unchecked(object sender, RoutedEventArgs e)
         {
             EpsonRC90.IsRetestMode = false;
+        }
+
+        private void MaterialPageSelect(object sender, RoutedEventArgs e)
+        {
+            HomePage.Visibility = Visibility.Collapsed;
+            ParameterPage.Visibility = Visibility.Collapsed;
+            CameraPage.Visibility = Visibility.Collapsed;
+            MatetialPage.Visibility = Visibility.Visible;
+        }
+
+        private void MaterialButtonClick(object sender, RoutedEventArgs e)
+        {
+            bool r = System.Windows.MessageBox.Show("确认更换物料?", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
+            if (r)
+            {
+                try
+                {
+                    MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 9].Value = Convert.ToInt32(MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 9].Value) + 1;
+                    MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 7].Value = MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 8].Value;
+                    MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 8].Value = System.DateTime.Now.ToString();
+                    MWorksheet.Cells[MaterialComboxBox.SelectedIndex + 3, 6].Value = 0;
+                }
+                catch (Exception ex)
+                {
+                    AddMessage(ex.Message);
+                }
+            }
         }
 
         private void ReadImage_Click2(object sender, RoutedEventArgs e)
