@@ -346,6 +346,9 @@ namespace JasperUI
                                                     线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
                                                     测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
 
+                                                    SystemBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "1";
+                                                    SingleBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SingleBarcodeMode", "0") == "1";
+
                                                     SamLimitCount.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "SamLimitCount", "999");
 
                                                     string COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "Scan1", "COM0");
@@ -870,9 +873,13 @@ namespace JasperUI
                                 AddMessage("测试机1发送:RobotCanGet");
                                 GlobalVars.Fx5u.SetM("M2004", false);
                                 if (epsonRC90.TestSendStatus)
-                                {
-                                    await epsonRC90.TestSentNet.SendAsync("RobotCanGet");
-
+                                {                                    
+                                    string scanmode = "0";
+                                    if (Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "1")
+                                    {
+                                        scanmode = "1";
+                                    }
+                                    await epsonRC90.TestSentNet.SendAsync("RobotCanGet;" + scanmode);
                                 }
                             }
                         }
@@ -1806,6 +1813,34 @@ namespace JasperUI
                     AddMessage(ex.Message);
                 }
             }
+        }
+
+        private void SingleBarcodeModeCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            SystemBarcodeModeCheckBox.IsChecked = false;
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
+        }
+
+        private void SingleBarcodeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SystemBarcodeModeCheckBox.IsChecked = true;
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "1");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "0");
+        }
+
+        private void SystemBarcodeModeCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            SingleBarcodeModeCheckBox.IsChecked = false;
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "1");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "0");
+        }
+
+        private void SystemBarcodeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SingleBarcodeModeCheckBox.IsChecked = true;
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
         }
 
         private void ReadImage_Click2(object sender, RoutedEventArgs e)
