@@ -768,9 +768,9 @@ namespace JasperUI.Model
         async void SaveResult(string[] rststr)
         {
             int index = int.Parse(rststr[1]);
+            bool rst = true;
             await Task.Run(() =>
-            {
-                
+            {               
                 Mysql mysql = new Mysql();
                 if (mysql.Connect())
                 {
@@ -778,12 +778,16 @@ namespace JasperUI.Model
                     {
                         string stm = "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
                         + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "'";
-                        mysql.executeQuery(stm);
+                        int aa = mysql.executeQuery(stm);
+                        if (aa < 1)
+                        {
+                            rst = false;
+                        }
                     }
                     mysql.DisConnect();
                 }
-
             });
+            await TestSentNet.SendAsync("TestResult;" + (rst ? "OK" : "NG"));
             if (!Directory.Exists("D:\\生产记录\\" + Name + "\\" + DateTime.Now.ToString("yyyyMMdd")))
             {
                 Directory.CreateDirectory("D:\\生产记录\\" + Name + "\\" + DateTime.Now.ToString("yyyyMMdd"));
