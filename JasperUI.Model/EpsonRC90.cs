@@ -774,15 +774,16 @@ namespace JasperUI.Model
                 Mysql mysql = new Mysql();
                 if (mysql.Connect())
                 {
+                    string stm = "";
                     for (int i = 0; i < 8; i++)
                     {
-                        string stm = "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
-                        + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "'";
-                        int aa = mysql.executeQuery(stm);
-                        if (aa < 1)
-                        {
-                            rst = false;
-                        }
+                        stm += "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
+                        + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "';";
+                    }
+                    int aa = mysql.executeQuery(stm);
+                    if (aa < 1)
+                    {
+                        rst = false;
                     }
                     mysql.DisConnect();
                 }
