@@ -42,6 +42,7 @@ namespace JasperUI.Model
         public JasperTester jasperTester = new JasperTester();
         public List<string> SamOpenList, SamShortList;
         public static bool IsRetestMode { set; get; } = false;
+        public bool AOISwitch = false;
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -501,23 +502,27 @@ namespace JasperUI.Model
                                             DataRow dr = drs[0];
 
                                             bool isAoi = false;
-                                            sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'A')) from dual";
-                                            ds = oraDB.executeQuery(sqlstr);
-                                            DataTable dt1 = ds.Tables[0];
-                                            if ((string)dt1.Rows[0][0] == "0")
+                                            if (AOISwitch)
                                             {
-                                                isAoi = true;
+                                                sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'A')) from dual";
+                                                ds = oraDB.executeQuery(sqlstr);
+                                                DataTable dt1 = ds.Tables[0];
+                                                if ((string)dt1.Rows[0][0] == "0")
+                                                {
+                                                    isAoi = true;
+                                                }
+                                                else
+                                                {
+                                                    //sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'B')) from dual";
+                                                    //ds = oraDB.executeQuery(sqlstr);
+                                                    //dt1 = ds.Tables[0];
+                                                    //if ((string)dt1.Rows[0][0] == "0")
+                                                    //{
+                                                    //    isAoi = true;
+                                                    //}
+                                                }
                                             }
-                                            else
-                                            {
-                                                //sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'B')) from dual";
-                                                //ds = oraDB.executeQuery(sqlstr);
-                                                //dt1 = ds.Tables[0];
-                                                //if ((string)dt1.Rows[0][0] == "0")
-                                                //{
-                                                //    isAoi = true;
-                                                //}
-                                            }
+                                            
                                             //条码 板条码 产品状态 日期 时间
                                             BarInfo[i].Barcode = isAoi ? "FAIL" : (string)dr["SCBARCODE"];
                                             BarInfo[i].BordBarcode = BordBarcode;
@@ -646,16 +651,20 @@ namespace JasperUI.Model
                                 {
 
                                     bool isAoi = false;
-                                    sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
-                                    ds = oraDB.executeQuery(sqlstr);
-
-
-
-                                    DataTable dt1 = ds.Tables[0];
-                                    if ((string)dt1.Rows[0][0] == "0")
+                                    if (AOISwitch)
                                     {
-                                        isAoi = true;
+                                        sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                                        ds = oraDB.executeQuery(sqlstr);
+
+
+
+                                        DataTable dt1 = ds.Tables[0];
+                                        if ((string)dt1.Rows[0][0] == "0")
+                                        {
+                                            isAoi = true;
+                                        }
                                     }
+
                                     //条码 板条码 产品状态 日期 时间
                                     BarInfo[barindex[i]].Barcode = isAoi ? "FAIL" : barcode[i];
                                     BarInfo[barindex[i]].BordBarcode = BordBarcode;

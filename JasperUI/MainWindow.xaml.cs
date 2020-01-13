@@ -348,6 +348,7 @@ namespace JasperUI
 
                                                     SystemBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "1";
                                                     SingleBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SingleBarcodeMode", "0") == "1";
+                                                    AOICheckBox.IsChecked = epsonRC90.AOISwitch = epsonRC90_2.AOISwitch = Inifile.INIGetStringValue(iniParameterPath, "System", "AOIMode", "1") == "1";
 
                                                     SamLimitCount.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "SamLimitCount", "999");
 
@@ -1841,6 +1842,18 @@ namespace JasperUI
             SingleBarcodeModeCheckBox.IsChecked = true;
             Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
             Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
+        }
+
+        private void AOICheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            Inifile.INIWriteValue(iniParameterPath, "System", "AOIMode", "0");
+            epsonRC90.AOISwitch = epsonRC90_2.AOISwitch = false;
+        }
+
+        private void AOICheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            Inifile.INIWriteValue(iniParameterPath, "System", "AOIMode", "1");
+            epsonRC90.AOISwitch = epsonRC90_2.AOISwitch = true;
         }
 
         private void ReadImage_Click2(object sender, RoutedEventArgs e)
