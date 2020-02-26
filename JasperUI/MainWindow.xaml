@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20200120" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20200226" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>

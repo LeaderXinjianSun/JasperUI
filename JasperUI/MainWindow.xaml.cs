@@ -969,7 +969,12 @@ namespace JasperUI
                                 GlobalVars.Fx5u.SetM("M2005", false);
                                 if (epsonRC90_2.TestSendStatus)
                                 {
-                                    await epsonRC90_2.TestSentNet.SendAsync("RobotCanGet");
+                                    string scanmode = "0";
+                                    if (Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "1")
+                                    {
+                                        scanmode = "1";
+                                    }
+                                    await epsonRC90_2.TestSentNet.SendAsync("RobotCanGet;" + scanmode);
 
                                 }
                             }
