@@ -152,6 +152,23 @@ namespace JasperUI.Model
             }
         }
         /// <summary>
+        /// 写单字
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="value"></param>
+        public void WriteD(string address, short value)
+        {
+            OperateResult write = melsec_net.Write(address, value);
+            if (write.IsSuccess)
+            {
+                _Connect = true;
+            }
+            else
+            {
+                _Connect = false;
+            }
+        }
+        /// <summary>
         /// 写双字
         /// </summary>
         /// <param name="address"></param>

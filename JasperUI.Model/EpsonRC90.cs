@@ -43,6 +43,7 @@ namespace JasperUI.Model
         public List<string> SamOpenList, SamShortList;
         public static bool IsRetestMode { set; get; } = false;
         public bool AOISwitch = false;
+        public int ABBSwitch = 1;
         #endregion
         #region 事件
         public delegate void PrintEventHandler(string ModelMessageStr);
@@ -499,36 +500,95 @@ namespace JasperUI.Model
                                         DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", pcser.ToString()));
                                         if (drs.Length > 0)
                                         {
-                                            DataRow dr = drs[0];
-
-                                            bool isAoi = false;
-                                            if (AOISwitch)
+                                            Oracle oraDB_1 = new Oracle("zdtdb", "ictdata", "ictdata*168");
+                                            if (oraDB_1.isConnect())
                                             {
-                                                sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'A')) from dual";
-                                                ds = oraDB.executeQuery(sqlstr);
-                                                DataTable dt1 = ds.Tables[0];
-                                                if ((string)dt1.Rows[0][0] == "0")
+                                                string sqlstr_1 = "select * from TED_FCT_DATA where barcode = '" + barcode[i] + "'";
+                                                DataSet ds_1 = oraDB_1.executeQuery(sqlstr_1);
+                                                DataTable dt_1 = ds_1.Tables[0];
+                                                bool abbresult = true;
+                                                switch (ABBSwitch)
                                                 {
-                                                    isAoi = true;
+                                                    case 1:
+                                                        abbresult = dt_1.Rows.Count <= 0;//InLine模式，要没有记录
+                                                        break;
+                                                    case 2:
+                                                    case 3:
+                                                        abbresult = dt_1.Rows.Count > 0;//复测、重工模式，要有记录
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+
+                                                if (abbresult)
+                                                {
+                                                    DataRow dr = drs[0];
+
+                                                    bool isAoi = false;
+                                                    if (AOISwitch)
+                                                    {
+                                                        sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'A')) from dual";
+                                                        ds = oraDB.executeQuery(sqlstr);
+                                                        DataTable dt1 = ds.Tables[0];
+                                                        if ((string)dt1.Rows[0][0] == "0")
+                                                        {
+                                                            isAoi = true;
+                                                        }
+                                                        else
+                                                        {
+                                                            //sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'B')) from dual";
+                                                            //ds = oraDB.executeQuery(sqlstr);
+                                                            //dt1 = ds.Tables[0];
+                                                            //if ((string)dt1.Rows[0][0] == "0")
+                                                            //{
+                                                            //    isAoi = true;
+                                                            //}
+                                                        }
+                                                    }
+
+                                                    //条码 板条码 产品状态 日期 时间
+                                                    BarInfo[i].Barcode = isAoi ? "FAIL" : (string)dr["SCBARCODE"];
+                                                    BarInfo[i].BordBarcode = BordBarcode;
+                                                    BarInfo[i].Status = isAoi ? 1 : 0;
+                                                    BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                                    BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                                 }
                                                 else
                                                 {
-                                                    //sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + (string)dr["SCBARCODE"] + "', 'B')) from dual";
-                                                    //ds = oraDB.executeQuery(sqlstr);
-                                                    //dt1 = ds.Tables[0];
-                                                    //if ((string)dt1.Rows[0][0] == "0")
-                                                    //{
-                                                    //    isAoi = true;
-                                                    //}
+                                                    DataRow dr = drs[0];
+                                                    switch (ABBSwitch)
+                                                    {
+                                                        case 1:
+                                                            ModelPrint(Name + "InLine模式，条码 " + (string)dr["SCBARCODE"] + "记录 " + dt_1.Rows.Count.ToString() + "> 0");
+                                                            break;
+                                                        case 2:
+                                                            ModelPrint(Name + "复测模式，条码 " + (string)dr["SCBARCODE"] + "记录 " + dt_1.Rows.Count.ToString() + "= 0");
+                                                            break;
+                                                        case 3:
+                                                            ModelPrint(Name + "重工模式，条码 " + (string)dr["SCBARCODE"] + "记录 " + dt_1.Rows.Count.ToString() + "= 0");
+                                                            break;
+                                                        default:
+                                                            break;
+                                                    }
+
+                                                    BarInfo[i].Barcode = "FAIL";
+                                                    BarInfo[i].BordBarcode = BordBarcode;
+                                                    BarInfo[i].Status = 6;
+                                                    BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                                    BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                                 }
                                             }
+                                            else
+                                            {
+                                                BarInfo[i].Barcode = "FAIL";
+                                                BarInfo[i].BordBarcode = BordBarcode;
+                                                BarInfo[i].Status = 2;
+                                                BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                                BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
+                                            }
+                                            oraDB_1.disconnect();
+
                                             
-                                            //条码 板条码 产品状态 日期 时间
-                                            BarInfo[i].Barcode = isAoi ? "FAIL" : (string)dr["SCBARCODE"];
-                                            BarInfo[i].BordBarcode = BordBarcode;
-                                            BarInfo[i].Status = isAoi ? 1 : 0;
-                                            BarInfo[i].TDate = DateTime.Now.ToString("yyyyMMdd");
-                                            BarInfo[i].TTime = DateTime.Now.ToString("HHmmss");
                                         }
                                         else
                                         {
@@ -638,50 +698,112 @@ namespace JasperUI.Model
                     {
                         if (barcode[i] != "error")
                         {
-
-                            Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
-                            if (oraDB.isConnect())
+                            Oracle oraDB_1 = new Oracle("zdtdb", "ictdata", "ictdata*168");
+                            if (oraDB_1.isConnect())
                             {
-                                string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode[i] + "'";
-                                DataSet ds = oraDB.executeQuery(sqlstr);
 
-
-                                DataTable dt = ds.Tables[0];
-                                if (dt.Rows.Count > 0)
+                                string sqlstr_1 = "select * from TED_FCT_DATA where barcode = '" + barcode[i] + "'";
+                                DataSet ds_1 = oraDB_1.executeQuery(sqlstr_1);
+                                DataTable dt_1 = ds_1.Tables[0];
+                                bool abbresult = true;
+                                switch (ABBSwitch)
                                 {
+                                    case 1:
+                                        abbresult = dt_1.Rows.Count <= 0;//InLine模式，要没有记录
+                                        break;
+                                    case 2:
+                                    case 3:
+                                        abbresult = dt_1.Rows.Count > 0;//复测、重工模式，要有记录
+                                        break;
+                                    default:                                        
+                                        break;
+                                }
 
-                                    bool isAoi = false;
-                                    if (AOISwitch)
+                                if (abbresult)
+                                {
+                                    Oracle oraDB = new Oracle("zdtbind", "sfcabar", "sfcabar*168");
+                                    if (oraDB.isConnect())
                                     {
-                                        sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
-                                        ds = oraDB.executeQuery(sqlstr);
+                                        string sqlstr = "select * from sfcdata.barautbind where SCBARCODE = '" + barcode[i] + "'";
+                                        DataSet ds = oraDB.executeQuery(sqlstr);
 
 
-
-                                        DataTable dt1 = ds.Tables[0];
-                                        if ((string)dt1.Rows[0][0] == "0")
+                                        DataTable dt = ds.Tables[0];
+                                        if (dt.Rows.Count > 0)
                                         {
-                                            isAoi = true;
+
+
+
+
+                                            bool isAoi = false;
+                                            if (AOISwitch)
+                                            {
+                                                sqlstr = "select to_char(sfcdata.GETCK_posaoi_t1('" + barcode[i] + "', 'A')) from dual";
+                                                ds = oraDB.executeQuery(sqlstr);
+
+
+
+                                                DataTable dt1 = ds.Tables[0];
+                                                if ((string)dt1.Rows[0][0] == "0")
+                                                {
+                                                    isAoi = true;
+                                                }
+                                            }
+
+                                            //条码 板条码 产品状态 日期 时间
+                                            BarInfo[barindex[i]].Barcode = isAoi ? "FAIL" : barcode[i];
+                                            BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                            BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
+                                            BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                            BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+
                                         }
+                                        else
+                                        {
+                                            ModelPrint(Name + "未查询到条码" + barcode[i] + "信息");
+                                            BarInfo[barindex[i]].Barcode = "FAIL";
+                                            BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                            BarInfo[barindex[i]].Status = 2;
+                                            BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                            BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                        }
+
                                     }
-
-                                    //条码 板条码 产品状态 日期 时间
-                                    BarInfo[barindex[i]].Barcode = isAoi ? "FAIL" : barcode[i];
-                                    BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                                    BarInfo[barindex[i]].Status = isAoi ? 1 : 0;
-                                    BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
-                                    BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
-
+                                    else
+                                    {
+                                        ModelPrint(Name + "数据库连接失败");
+                                        BarInfo[barindex[i]].Barcode = "FAIL";
+                                        BarInfo[barindex[i]].BordBarcode = BordBarcode;
+                                        BarInfo[barindex[i]].Status = 2;
+                                        BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
+                                        BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
+                                    }
+                                    oraDB.disconnect();
                                 }
                                 else
                                 {
-                                    ModelPrint(Name + "未查询到条码" + barcode[i] + "信息");
+                                    switch (ABBSwitch)
+                                    {
+                                        case 1:
+                                            ModelPrint(Name + "InLine模式，条码 " + barcode[i] + "记录 " + dt_1.Rows.Count.ToString() + "> 0");
+                                            break;
+                                        case 2:
+                                            ModelPrint(Name + "复测模式，条码 " + barcode[i] + "记录 " + dt_1.Rows.Count.ToString() + "= 0");
+                                            break;
+                                        case 3:
+                                            ModelPrint(Name + "重工模式，条码 " + barcode[i] + "记录 " + dt_1.Rows.Count.ToString() + "= 0");
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    
                                     BarInfo[barindex[i]].Barcode = "FAIL";
                                     BarInfo[barindex[i]].BordBarcode = BordBarcode;
-                                    BarInfo[barindex[i]].Status = 2;
+                                    BarInfo[barindex[i]].Status = 6;
                                     BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
                                     BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
                                 }
+
                                 
                             }
                             else
@@ -693,7 +815,7 @@ namespace JasperUI.Model
                                 BarInfo[barindex[i]].TDate = DateTime.Now.ToString("yyyyMMdd");
                                 BarInfo[barindex[i]].TTime = DateTime.Now.ToString("HHmmss");
                             }
-                            oraDB.disconnect();
+                            oraDB_1.disconnect();
                         }
                         else
                         {
@@ -786,7 +908,8 @@ namespace JasperUI.Model
                     string stm = "";
                     for (int i = 0; i < 8; i++)
                     {
-                        stm += "UPDATE BARBIND SET RESULT = '" + rststr[2 + i] + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
+                        string resultstr = BarInfo[index * 8 + i].Status == 6 ? "6" : rststr[2 + i];
+                        stm += "UPDATE BARBIND SET RESULT = '" + resultstr + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
                         + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "' AND PCSSER = '" + (index * 8 + i + 1).ToString() + "'";
                         int aa = mysql.executeQuery(stm);
                         if (aa < 1)

@@ -26,13 +26,15 @@ using System.Windows.Forms;
 using System.Net;
 using BingLibrary.hjb;
 using System.Collections.ObjectModel;
+using MahApps.Metro.Controls;
+using BingLibrary.hjb.Metro;
 
 namespace JasperUI
 {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {
         #region 变量
         bool CameraState = false;
@@ -77,6 +79,7 @@ namespace JasperUI
         ExcelWorksheet MWorksheet;
         int MaterialStatus = 0;
         int haocaisavetimes = 0;
+        Metro metro = new Metro();
         #endregion
         public MainWindow()
         {
@@ -346,8 +349,31 @@ namespace JasperUI
                                                     线体.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "线体", "null");
                                                     测试料号.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "测试料号", "null");
 
-                                                    SystemBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "1";
-                                                    SingleBarcodeModeCheckBox.IsChecked = Inifile.INIGetStringValue(iniParameterPath, "System", "SingleBarcodeMode", "0") == "1";
+                                                    if (Inifile.INIGetStringValue(iniParameterPath, "System", "SystemBarcodeMode", "0") == "0")
+                                                    {
+                                                        SingleBarcodeModeRadioButton.IsChecked = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        SystemBarcodeModeRadioButton.IsChecked = true;
+                                                    }
+                                                    epsonRC90.ABBSwitch = epsonRC90_2.ABBSwitch = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "System", "AABMode", "1"));
+                                                    switch (Inifile.INIGetStringValue(iniParameterPath, "System", "AABMode", "1"))
+                                                    {
+                                                        case "2":
+                                                            ABBReTestRadioButton.IsChecked = true;
+                                                            AABModeTextBlock.Text = "复测模式";
+                                                            break;
+                                                        case "3":
+                                                            ABBReProductRadioButton.IsChecked = true;
+                                                            AABModeTextBlock.Text = "重工模式";
+                                                            break;
+                                                        default:
+                                                            ABBInLineRadioButton.IsChecked = true;
+                                                            AABModeTextBlock.Text = "InLine模式";
+                                                            break;
+                                                    }
+
                                                     AOICheckBox.IsChecked = epsonRC90.AOISwitch = epsonRC90_2.AOISwitch = Inifile.INIGetStringValue(iniParameterPath, "System", "AOIMode", "1") == "1";
 
                                                     SamLimitCount.Text = Inifile.INIGetStringValue(iniParameterPath, "System", "SamLimitCount", "999");
@@ -1582,12 +1608,17 @@ namespace JasperUI
             MatetialPage.Visibility = Visibility.Collapsed;
         }
 
-        private void ParameterPageSelect(object sender, RoutedEventArgs e)
+        private async void ParameterPageSelect(object sender, RoutedEventArgs e)
         {
-            HomePage.Visibility = Visibility.Collapsed;
-            ParameterPage.Visibility = Visibility.Visible;
-            CameraPage.Visibility = Visibility.Collapsed;
-            MatetialPage.Visibility = Visibility.Collapsed;
+            string rr = await metro.ShowLoginOnlyPassword("登录");
+            if (rr == GetPassWord())
+            {
+                HomePage.Visibility = Visibility.Collapsed;
+                ParameterPage.Visibility = Visibility.Visible;
+                CameraPage.Visibility = Visibility.Collapsed;
+                MatetialPage.Visibility = Visibility.Collapsed;
+            }
+
         }
         private void CameraPageSelect(object sender, RoutedEventArgs e)
         {
@@ -1821,33 +1852,7 @@ namespace JasperUI
             }
         }
 
-        private void SingleBarcodeModeCheckBox_Checked(object sender, RoutedEventArgs e)
-        {
-            SystemBarcodeModeCheckBox.IsChecked = false;
-            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
-            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
-        }
-
-        private void SingleBarcodeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            SystemBarcodeModeCheckBox.IsChecked = true;
-            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "1");
-            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "0");
-        }
-
-        private void SystemBarcodeModeCheckBox_Checked(object sender, RoutedEventArgs e)
-        {
-            SingleBarcodeModeCheckBox.IsChecked = false;
-            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "1");
-            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "0");
-        }
-
-        private void SystemBarcodeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            SingleBarcodeModeCheckBox.IsChecked = true;
-            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
-            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
-        }
+       
 
         private void AOICheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
@@ -1859,6 +1864,73 @@ namespace JasperUI
         {
             Inifile.INIWriteValue(iniParameterPath, "System", "AOIMode", "1");
             epsonRC90.AOISwitch = epsonRC90_2.AOISwitch = true;
+        }
+        string GetPassWord()
+        {
+            int day = System.DateTime.Now.Day;
+            int month = System.DateTime.Now.Month;
+            string ss = (day + month).ToString();
+            string passwordstr = "";
+            for (int i = 0; i < 4 - ss.Length; i++)
+            {
+                passwordstr += "0";
+            }
+            passwordstr += ss;
+            return passwordstr;
+        }
+
+        private void SingleBarcodeModeRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "0");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "1");
+        }
+
+        private void SystemBarcodeModeRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            Inifile.INIWriteValue(iniParameterPath, "System", "SystemBarcodeMode", "1");
+            Inifile.INIWriteValue(iniParameterPath, "System", "SingleBarcodeMode", "0");
+        }
+
+        private void ABBInLineRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            metro.ChangeAccent("blue");
+            Inifile.INIWriteValue(iniParameterPath, "System", "AABMode", "1");
+            epsonRC90.ABBSwitch = epsonRC90_2.ABBSwitch = 1;
+            AABModeTextBlock.Text = "InLine模式";
+            try
+            {
+                GlobalVars.Fx5u.WriteD("D6000", (short)0);
+            }
+            catch
+            { }
+        }
+
+        private void ABBReProductRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            metro.ChangeAccent("violet");
+            Inifile.INIWriteValue(iniParameterPath, "System", "AABMode", "3");
+            epsonRC90.ABBSwitch = epsonRC90_2.ABBSwitch = 2;
+            AABModeTextBlock.Text = "重工模式";
+            try
+            {
+                GlobalVars.Fx5u.WriteD("D6000", (short)2);
+            }
+            catch
+            { }
+        }
+
+        private void ABBReTestRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            metro.ChangeAccent("orange");
+            Inifile.INIWriteValue(iniParameterPath, "System", "AABMode", "2");
+            epsonRC90.ABBSwitch = epsonRC90_2.ABBSwitch = 3;
+            AABModeTextBlock.Text = "复测模式";
+            try
+            {
+                GlobalVars.Fx5u.WriteD("D6000", (short)1);
+            }
+            catch
+            { }
         }
 
         private void ReadImage_Click2(object sender, RoutedEventArgs e)
