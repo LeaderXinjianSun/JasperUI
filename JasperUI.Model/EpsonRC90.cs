@@ -500,10 +500,11 @@ namespace JasperUI.Model
                                         DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", pcser.ToString()));
                                         if (drs.Length > 0)
                                         {
+                                            DataRow dr = drs[0];
                                             Oracle oraDB_1 = new Oracle("zdtdb", "ictdata", "ictdata*168");
                                             if (oraDB_1.isConnect())
                                             {
-                                                string sqlstr_1 = "select * from TED_FCT_DATA where barcode = '" + barcode[i] + "'";
+                                                string sqlstr_1 = "select * from TED_FCT_DATA where barcode = '" + (string)dr["SCBARCODE"] + "'";
                                                 DataSet ds_1 = oraDB_1.executeQuery(sqlstr_1);
                                                 DataTable dt_1 = ds_1.Tables[0];
                                                 bool abbresult = true;
@@ -522,7 +523,7 @@ namespace JasperUI.Model
 
                                                 if (abbresult)
                                                 {
-                                                    DataRow dr = drs[0];
+                                                    
 
                                                     bool isAoi = false;
                                                     if (AOISwitch)
@@ -555,7 +556,6 @@ namespace JasperUI.Model
                                                 }
                                                 else
                                                 {
-                                                    DataRow dr = drs[0];
                                                     switch (ABBSwitch)
                                                     {
                                                         case 1:
@@ -905,11 +905,11 @@ namespace JasperUI.Model
                 Mysql mysql = new Mysql();
                 if (mysql.Connect())
                 {
-                    string stm = "";
+                   
                     for (int i = 0; i < 8; i++)
                     {
                         string resultstr = BarInfo[index * 8 + i].Status == 6 ? "6" : rststr[2 + i];
-                        stm += "UPDATE BARBIND SET RESULT = '" + resultstr + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
+                        string stm = "UPDATE BARBIND SET RESULT = '" + resultstr + "' WHERE SCBARCODE = '" + BarInfo[index * 8 + i].Barcode + "' AND SCBODBAR = '" + BarInfo[index * 8 + i].BordBarcode
                         + "' AND SDATE = '" + BarInfo[index * 8 + i].TDate + "' AND STIME = '" + BarInfo[index * 8 + i].TTime + "' AND PCSSER = '" + (index * 8 + i + 1).ToString() + "'";
                         int aa = mysql.executeQuery(stm);
                         if (aa < 1)
