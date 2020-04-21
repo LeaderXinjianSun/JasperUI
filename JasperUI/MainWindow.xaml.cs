@@ -361,8 +361,8 @@ namespace JasperUI
                                                     switch (Inifile.INIGetStringValue(iniParameterPath, "System", "AABMode", "1"))
                                                     {
                                                         case "2":
-                                                            ABBReTestRadioButton.IsChecked = true;
-                                                            AABModeTextBlock.Text = "复测模式";
+                                                            //ABBReTestRadioButton.IsChecked = true;
+                                                            //AABModeTextBlock.Text = "复测模式";
                                                             break;
                                                         case "3":
                                                             ABBReProductRadioButton.IsChecked = true;

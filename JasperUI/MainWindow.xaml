@@ -7,7 +7,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
         xmlns:local="clr-namespace:JasperUI"
         mc:Ignorable="d"
-        Title="JasperUI20200226" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
+        Title="JasperUI20200421" Height="768" Width="1024" WindowStartupLocation="CenterScreen" WindowState="Normal"
                      BorderThickness="0" ResizeMode="CanResizeWithGrip" Closing="Window_Closing" Loaded="Window_Loaded" Icon="rocket_64px_1227485_easyicon.net.ico">
     <Window.Resources>
         <ResourceDictionary>
@@ -339,7 +339,7 @@
                         <CheckBox x:Name="AOICheckBox" Checked="AOICheckBox_Checked" Unchecked="AOICheckBox_Unchecked" Content="AOI检测" Margin="10,0"></CheckBox>
                         <StackPanel Orientation="Horizontal" Margin="0,10">
                             <RadioButton x:Name="ABBInLineRadioButton" GroupName="ABBMode" Checked="ABBInLineRadioButton_Checked">InLine</RadioButton>
-                            <RadioButton x:Name="ABBReTestRadioButton" GroupName="ABBMode" Checked="ABBReTestRadioButton_Checked">复测</RadioButton>
+                            <!--<RadioButton x:Name="ABBReTestRadioButton" GroupName="ABBMode" Checked="ABBReTestRadioButton_Checked">复测</RadioButton>-->
                             <RadioButton x:Name="ABBReProductRadioButton" GroupName="ABBMode" Checked="ABBReProductRadioButton_Checked">重工</RadioButton>
                         </StackPanel>
                         <!--<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
