@@ -1056,6 +1056,8 @@ namespace JasperUI
                     }
                     #region 报警
                     GlobalVars.Fx5u.SetMultiM("M2514",new bool[] { epsonRC90.Rc90Out[49], epsonRC90_2.Rc90Out[49], epsonRC90.Rc90Out[50], epsonRC90_2.Rc90Out[50], epsonRC90.Rc90Out[51], epsonRC90_2.Rc90Out[51], epsonRC90.Rc90Out[52], epsonRC90_2.Rc90Out[52] });
+                    GlobalVars.Fx5u.SetMultiM("M2533", new bool[] { epsonRC90.Rc90Out[53], epsonRC90.Rc90Out[54], epsonRC90.Rc90Out[55], epsonRC90.Rc90Out[56], epsonRC90.Rc90Out[57], epsonRC90.Rc90Out[58], epsonRC90.Rc90Out[59], epsonRC90.Rc90Out[60] });
+                    GlobalVars.Fx5u.SetMultiM("M2543", new bool[] { epsonRC90_2.Rc90Out[53], epsonRC90_2.Rc90Out[54], epsonRC90_2.Rc90Out[55], epsonRC90_2.Rc90Out[56], epsonRC90_2.Rc90Out[57], epsonRC90_2.Rc90Out[58], epsonRC90_2.Rc90Out[59], epsonRC90_2.Rc90Out[60] });
                     M1000 = await Task.Run<bool[]>(() => {
                         return GlobalVars.Fx5u.ReadMultiM("M1000", 96);
                     });
